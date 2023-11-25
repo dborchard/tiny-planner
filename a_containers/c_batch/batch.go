@@ -3,7 +3,7 @@ package batch
 import (
 	"bytes"
 	"fmt"
-	vector "tiny_planner/c_sql/c_execution/a_containers/a_vector"
+	"tiny_planner/a_containers/b_vector"
 )
 
 type Batch struct {

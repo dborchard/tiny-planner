@@ -6,7 +6,7 @@ import (
 	"github.com/blastrain/vitess-sqlparser/tidbparser/ast"
 	"github.com/blastrain/vitess-sqlparser/tidbparser/dependency/model"
 	"github.com/blastrain/vitess-sqlparser/tidbparser/parser/opcode"
-	types "tiny_planner/a_types"
+	"tiny_planner/a_containers/a_types"
 	catalog "tiny_planner/b_catalog"
 	"tiny_planner/c_sql/b_planner/plancore"
 )

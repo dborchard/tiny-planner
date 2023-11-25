@@ -3,7 +3,7 @@ package plancore
 import (
 	"fmt"
 	"github.com/blastrain/vitess-sqlparser/tidbparser/ast"
-	types "tiny_planner/a_types"
+	"tiny_planner/a_containers/a_types"
 	catalog "tiny_planner/b_catalog"
 )
 

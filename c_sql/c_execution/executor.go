@@ -8,7 +8,7 @@ import (
 	catalog "tiny_planner/b_catalog"
 	"tiny_planner/c_sql/b_planner/plancore"
 	"tiny_planner/c_sql/b_planner/planphysical"
-	process "tiny_planner/c_sql/c_execution/b_process"
+	process "tiny_planner/c_sql/c_execution/a_process"
 )
 
 type Executor interface {

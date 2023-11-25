@@ -2,8 +2,8 @@ package batch
 
 import (
 	"testing"
-	types "tiny_planner/a_types"
-	vector "tiny_planner/c_sql/c_execution/a_containers/a_vector"
+	"tiny_planner/a_containers/a_types"
+	"tiny_planner/a_containers/b_vector"
 )
 
 func Test1(t *testing.T) {
