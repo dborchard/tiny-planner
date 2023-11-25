@@ -1,6 +1,6 @@
 ## Tiny SQL Planner
 
-Inspired from [TinySQL](https://github.com/talent-plan/tinysql/tree/course/planner).
+Inspired from [TinySQL](https://github.com/talent-plan/tinysql/tree/course/planner) and MatrixOrigin(https://github.com/matrixorigin/matrixone).
 
 ### Main Components
 - Logical Optimizer (Rule Based) [here](c_sql/b_planner/planlogical/b_builder_test.go). Right now it only supports `Column Pruner`.
