@@ -1,4 +1,8 @@
-package tiny_planner
+package main
+
+func main() {
+
+}
 
 type DB struct {
 }
