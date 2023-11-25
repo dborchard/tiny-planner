@@ -143,11 +143,11 @@ func (b *PlanBuilder) buildProjection(p LogicalPlan, fields []*ast.SelectField) 
 			})
 			_ = schema.AppendCol(v.Name.Name.L, types.T_int32.ToType())
 		case *ast.FuncCallExpr:
-
 			proj.Expressions = append(proj.Expressions, &plancore.ExprFunc{
 				Name: v.FnName.L,
 				Args: plancore.ArgsToExprs(v.Args),
 			})
+			schema.ColDefs = append(schema.ColDefs, plancore.ArgsToColDefs(v.Args)...)
 		}
 
 	}

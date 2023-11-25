@@ -95,3 +95,19 @@ func ArgsToExprs(args []ast.ExprNode) []Expr {
 	}
 	return exprs
 }
+
+func ArgsToColDefs(args []ast.ExprNode) []*catalog.ColDef {
+	var catalogs []*catalog.ColDef
+	for _, arg := range args {
+		switch v := arg.(type) {
+		case *ast.ColumnNameExpr:
+			catalogs = append(catalogs, &catalog.ColDef{
+				Type: types.T_int32.ToType(),
+				Idx:  0,
+			})
+		case *ast.FuncCallExpr:
+			catalogs = append(catalogs, ArgsToColDefs(v.Args)...)
+		}
+	}
+	return catalogs
+}
