@@ -2,6 +2,7 @@ package plancore
 
 import (
 	"fmt"
+	"github.com/blastrain/vitess-sqlparser/tidbparser/ast"
 	types "tiny_planner/a_types"
 	catalog "tiny_planner/b_catalog"
 )
@@ -74,4 +75,23 @@ func ColDefToExprCol(colDef []*catalog.ColDef) []ExprCol {
 		})
 	}
 	return exprCols
+}
+
+func ArgsToExprs(args []ast.ExprNode) []Expr {
+	var exprs []Expr
+	for _, arg := range args {
+		switch v := arg.(type) {
+		case *ast.ColumnNameExpr:
+			exprs = append(exprs, &ExprCol{
+				Type:   types.T_int32.ToType(),
+				ColIdx: 0,
+			})
+		case *ast.FuncCallExpr:
+			exprs = append(exprs, &ExprFunc{
+				Name: v.FnName.L,
+				Args: ArgsToExprs(v.Args),
+			})
+		}
+	}
+	return exprs
 }
