@@ -7,7 +7,7 @@ import (
 )
 
 func Test1(t *testing.T) {
-	vec := NewVec(types.types.T_int32.ToType())
+	vec := NewVec(types.T_int32.ToType())
 	err := vec.Append(int32(1), false)
 	require.NoError(t, err)
 

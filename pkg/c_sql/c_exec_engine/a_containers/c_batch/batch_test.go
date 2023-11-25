@@ -13,7 +13,7 @@ func Test1(t *testing.T) {
 	bat := NewWithSize(colCount) // 2 columns
 	bat.SetRowCount(rowCount)    // 3 rows
 
-	col1 := vector.NewVec(types.types.T_int32.ToType())
+	col1 := vector.NewVec(types.T_int32.ToType())
 	for i := 0; i < rowCount; i++ {
 		_ = col1.Append(int32(i), false)
 	}
