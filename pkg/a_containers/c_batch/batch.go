@@ -8,7 +8,7 @@ import (
 
 type Batch struct {
 	Attrs    []string
-	Vecs     []*vector.vector
+	Vecs     []*vector.Vector
 	rowCount int
 }
 

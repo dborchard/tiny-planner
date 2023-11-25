@@ -15,7 +15,7 @@ func MockBatch(colCnt int, rowCnt int, rowStart int) *Batch {
 
 		switch i % 20 {
 		case 0:
-			bat.Vecs[i] = vector.vector.NewVec(types.types.T_int32.ToType())
+			bat.Vecs[i] = vector.NewVec(types.T_int32.ToType())
 			for j := rowStart; j < rowStart+rowCnt; j++ {
 				_ = bat.Vecs[i].Append(int32(-j), false)
 			}

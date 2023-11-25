@@ -7,7 +7,7 @@ import (
 
 type Register struct {
 	// InputBatch, stores the result of the previous operator.
-	InputBatch *batch.batch
+	InputBatch *batch.Batch
 }
 
 type Process struct {

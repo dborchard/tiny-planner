@@ -7,7 +7,7 @@ import (
 import "github.com/RoaringBitmap/roaring"
 
 type Vector struct {
-	typ    *types.types
+	typ    *types.Type
 	col    any
 	length int
 	nsp    *roaring.Bitmap
