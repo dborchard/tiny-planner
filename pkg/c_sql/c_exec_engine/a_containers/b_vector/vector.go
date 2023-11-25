@@ -2,12 +2,12 @@ package vector
 
 import (
 	"fmt"
-	"tiny_planner/pkg/a_common/a_types"
+	"tiny_planner/pkg/c_sql/c_exec_engine/a_containers/a_types"
 )
 import "github.com/RoaringBitmap/roaring"
 
 type Vector struct {
-	typ    *types.Type
+	typ    *types.types
 	col    any
 	length int
 	nsp    *roaring.Bitmap

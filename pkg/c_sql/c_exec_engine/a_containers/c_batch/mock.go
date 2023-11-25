@@ -2,8 +2,8 @@ package batch
 
 import (
 	"fmt"
-	"tiny_planner/pkg/a_common/a_types"
-	"tiny_planner/pkg/c_sql/c_exec_engine/a_containers/a_vector"
+	"tiny_planner/pkg/c_sql/c_exec_engine/a_containers/a_types"
+	"tiny_planner/pkg/c_sql/c_exec_engine/a_containers/b_vector"
 )
 
 func MockBatch(colCnt int, rowCnt int, rowStart int) *Batch {
@@ -15,7 +15,7 @@ func MockBatch(colCnt int, rowCnt int, rowStart int) *Batch {
 
 		switch i % 20 {
 		case 0:
-			bat.Vecs[i] = vector.NewVec(types.T_int32.ToType())
+			bat.Vecs[i] = vector.NewVec(types.types.T_int32.ToType())
 			for j := rowStart; j < rowStart+rowCnt; j++ {
 				_ = bat.Vecs[i].Append(int32(-j), false)
 			}

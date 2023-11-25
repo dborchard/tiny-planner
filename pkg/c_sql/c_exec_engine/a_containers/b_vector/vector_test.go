@@ -3,11 +3,11 @@ package vector
 import (
 	"github.com/stretchr/testify/require"
 	"testing"
-	"tiny_planner/pkg/a_common/a_types"
+	"tiny_planner/pkg/c_sql/c_exec_engine/a_containers/a_types"
 )
 
 func Test1(t *testing.T) {
-	vec := NewVec(types.T_int32.ToType())
+	vec := NewVec(types.types.T_int32.ToType())
 	err := vec.Append(int32(1), false)
 	require.NoError(t, err)
 

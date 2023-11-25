@@ -2,8 +2,8 @@ package batch
 
 import (
 	"testing"
-	"tiny_planner/pkg/a_common/a_types"
-	"tiny_planner/pkg/c_sql/c_exec_engine/a_containers/a_vector"
+	"tiny_planner/pkg/c_sql/c_exec_engine/a_containers/a_types"
+	"tiny_planner/pkg/c_sql/c_exec_engine/a_containers/b_vector"
 )
 
 func Test1(t *testing.T) {
@@ -13,7 +13,7 @@ func Test1(t *testing.T) {
 	bat := NewWithSize(colCount) // 2 columns
 	bat.SetRowCount(rowCount)    // 3 rows
 
-	col1 := vector.NewVec(types.T_int32.ToType())
+	col1 := vector.NewVec(types.types.T_int32.ToType())
 	for i := 0; i < rowCount; i++ {
 		_ = col1.Append(int32(i), false)
 	}

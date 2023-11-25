@@ -2,7 +2,7 @@ package catalog
 
 import (
 	"fmt"
-	types "tiny_planner/pkg/a_common/a_types"
+	"tiny_planner/pkg/c_sql/c_exec_engine/a_containers/a_types"
 )
 
 func MockTableDef(tblName string, colCnt int) *TableDef {
