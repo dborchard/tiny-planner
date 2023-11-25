@@ -2,7 +2,7 @@ package catalog
 
 import (
 	"github.com/blastrain/vitess-sqlparser/tidbparser/dependency/model"
-	types "tiny_planner/pkg/a_containers/a_types"
+	types "tiny_planner/pkg/a_common/a_types"
 )
 
 type ColDef struct {

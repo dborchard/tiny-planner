@@ -3,18 +3,18 @@ package batch
 import (
 	"bytes"
 	"fmt"
-	"tiny_planner/pkg/a_containers/b_vector"
+	"tiny_planner/pkg/c_sql/c_exec_engine/a_containers/a_vector"
 )
 
 type Batch struct {
 	Attrs    []string
-	Vecs     []*vector.Vector
+	Vecs     []*vector.vector
 	rowCount int
 }
 
 func NewWithSize(n int) *Batch {
 	return &Batch{
-		Vecs:     make([]*vector.Vector, n),
+		Vecs:     make([]*vector.vector, n),
 		Attrs:    make([]string, n),
 		rowCount: 0,
 	}

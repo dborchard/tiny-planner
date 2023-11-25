@@ -3,7 +3,7 @@ package planphysical
 import (
 	"context"
 	"tiny_planner/pkg/c_sql/b_planner/plancore"
-	"tiny_planner/pkg/c_sql/c_execution"
+	"tiny_planner/pkg/c_sql/c_exec_engine"
 )
 
 type PhysicalPlan interface {

@@ -3,7 +3,7 @@ package vector
 import (
 	"github.com/stretchr/testify/require"
 	"testing"
-	"tiny_planner/pkg/a_containers/a_types"
+	"tiny_planner/pkg/a_common/a_types"
 )
 
 func Test1(t *testing.T) {

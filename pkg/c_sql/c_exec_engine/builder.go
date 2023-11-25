@@ -10,11 +10,11 @@ import (
 	"tiny_planner/pkg/b_catalog"
 	plancore2 "tiny_planner/pkg/c_sql/b_planner/plancore"
 	"tiny_planner/pkg/c_sql/b_planner/planphysical"
-	"tiny_planner/pkg/c_sql/c_execution/a_process"
+	"tiny_planner/pkg/c_sql/d_exec_runtime/b_process"
 )
 
 type Executor interface {
-	Prepare(proc *process.Process, arg any) (err error)
+	Prepare(proc *process.process, arg any) (err error)
 	Call(proc *process.Process, arg any) (process.ExecStatus, error)
 	String(arg any, buf *bytes.Buffer)
 }

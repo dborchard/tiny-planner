@@ -2,7 +2,7 @@ package vector
 
 import (
 	"fmt"
-	"tiny_planner/pkg/a_containers/a_types"
+	"tiny_planner/pkg/a_common/a_types"
 )
 import "github.com/RoaringBitmap/roaring"
 
