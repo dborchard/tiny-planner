@@ -5,7 +5,7 @@ import (
 	"errors"
 	"github.com/blastrain/vitess-sqlparser/tidbparser/ast"
 	"tiny_planner/b_catalog"
-	"tiny_planner/sql/b_planner/plancore"
+	"tiny_planner/c_sql/b_planner/plancore"
 )
 
 type PlanBuilder struct {

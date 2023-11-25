@@ -3,7 +3,7 @@ package planlogical
 import (
 	"context"
 	catalog "tiny_planner/b_catalog"
-	"tiny_planner/sql/b_planner/plancore"
+	"tiny_planner/c_sql/b_planner/plancore"
 )
 
 type columnPruner struct {

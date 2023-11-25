@@ -8,7 +8,7 @@ import (
 	"github.com/blastrain/vitess-sqlparser/tidbparser/parser/opcode"
 	types "tiny_planner/a_types"
 	catalog "tiny_planner/b_catalog"
-	"tiny_planner/sql/b_planner/plancore"
+	"tiny_planner/c_sql/b_planner/plancore"
 )
 
 func (b *PlanBuilder) buildSelect(ctx context.Context, sel *ast.SelectStmt) (p LogicalPlan, err error) {

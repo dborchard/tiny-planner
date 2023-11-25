@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/blastrain/vitess-sqlparser/tidbparser/dependency/model"
 	catalog "tiny_planner/b_catalog"
-	"tiny_planner/sql/b_planner/plancore"
+	"tiny_planner/c_sql/b_planner/plancore"
 )
 
 type LogicalPlan interface {

@@ -3,7 +3,7 @@ package planlogical
 import (
 	"context"
 	"github.com/blastrain/vitess-sqlparser/tidbparser/ast"
-	"tiny_planner/sql/b_planner/plancore"
+	"tiny_planner/c_sql/b_planner/plancore"
 )
 
 func (b *PlanBuilder) buildInsert(ctx context.Context, insert *ast.InsertStmt) (plancore.Plan, error) {

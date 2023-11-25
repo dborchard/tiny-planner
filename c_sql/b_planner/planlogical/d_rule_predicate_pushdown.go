@@ -2,7 +2,7 @@ package planlogical
 
 import (
 	"context"
-	"tiny_planner/sql/b_planner/plancore"
+	"tiny_planner/c_sql/b_planner/plancore"
 )
 
 type ppdSolver struct{}
