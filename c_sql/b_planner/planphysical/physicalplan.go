@@ -9,14 +9,15 @@ import (
 type PhysicalPlan interface {
 	plancore.Plan
 
-	ToExecutor(ctx context.Context) (execution.Executor, error)
+	// ToPB converts the physical plan to a protobuf message.
+	ToPB(ctx context.Context) (execution.Executor, error)
 }
 
 type basePhysicalPlan struct {
 	plancore.BasePlan
 }
 
-func (p *basePhysicalPlan) ToExecutor(ctx context.Context) (execution.Executor, error) {
+func (p *basePhysicalPlan) ToPB(ctx context.Context) (execution.Executor, error) {
 	executorBuilder := execution.NewExecutorBuilder(ctx, p.Schema())
 	return executorBuilder.Build(p)
 }
