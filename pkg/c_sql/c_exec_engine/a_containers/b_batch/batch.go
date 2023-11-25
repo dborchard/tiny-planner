@@ -8,13 +8,13 @@ import (
 
 type Batch struct {
 	Attrs    []string
-	Vecs     []*vector.vector
+	Vecs     []*vector.Vector
 	rowCount int
 }
 
 func NewWithSize(n int) *Batch {
 	return &Batch{
-		Vecs:     make([]*vector.vector, n),
+		Vecs:     make([]*vector.Vector, n),
 		Attrs:    make([]string, n),
 		rowCount: 0,
 	}

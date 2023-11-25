@@ -14,7 +14,7 @@ import (
 )
 
 type Executor interface {
-	Prepare(proc *process.process, arg any) (err error)
+	Prepare(proc *process.Process, arg any) (err error)
 	Call(proc *process.Process, arg any) (process.ExecStatus, error)
 	String(arg any, buf *bytes.Buffer)
 }
