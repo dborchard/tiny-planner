@@ -10,7 +10,7 @@ import (
 	"tiny_planner/pkg/b_catalog"
 	plancore2 "tiny_planner/pkg/c_sql/b_planner/plancore"
 	"tiny_planner/pkg/c_sql/b_planner/planphysical"
-	"tiny_planner/pkg/c_sql/d_exec_runtime/b_process"
+	"tiny_planner/pkg/c_sql/d_exec_runtime/a_process"
 )
 
 type Executor interface {
