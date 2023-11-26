@@ -3,7 +3,7 @@ package planlogical
 import (
 	"context"
 	"tiny_planner/pkg/b_catalog"
-	"tiny_planner/pkg/c_sql/b_planner/plancore"
+	"tiny_planner/pkg/c_sql/c_exec_engine/c_expression_eval"
 )
 
 type columnPruner struct {
@@ -14,15 +14,15 @@ func (*columnPruner) Name() string {
 }
 
 func (*columnPruner) Optimize(ctx context.Context, lp LogicalPlan) (LogicalPlan, error) {
-	err := lp.PruneColumns(plancore.ColDefToExprCol(lp.Schema().ColDefs))
+	err := lp.PruneColumns(expression.ColDefToExprCol(lp.Schema().ColDefs))
 	return lp, err
 }
 
-func (p *baseLogicalPlan) PruneColumns(cols []plancore.ExprCol) error {
+func (p *baseLogicalPlan) PruneColumns(cols []expression.ExprCol) error {
 	panic("unimplemented")
 }
 
-func (p *LogicalProjection) PruneColumns(parentUsedCols []plancore.ExprCol) error {
+func (p *LogicalProjection) PruneColumns(parentUsedCols []expression.ExprCol) error {
 	child := p.children[0]
 
 	used := getUsedList(parentUsedCols, p.Schema())
@@ -38,7 +38,7 @@ func (p *LogicalProjection) PruneColumns(parentUsedCols []plancore.ExprCol) erro
 	return child.PruneColumns(parentUsedCols)
 }
 
-func getUsedList(usedCols []plancore.ExprCol, schema *catalog.TableDef) []bool {
+func getUsedList(usedCols []expression.ExprCol, schema *catalog.TableDef) []bool {
 	used := make([]bool, len(schema.ColDefs))
 	for i, col := range schema.ColDefs {
 		used[i] = false
@@ -52,7 +52,7 @@ func getUsedList(usedCols []plancore.ExprCol, schema *catalog.TableDef) []bool {
 	return used
 }
 
-func (p *LogicalSelection) PruneColumns(parentUsedCols []plancore.ExprCol) error {
+func (p *LogicalSelection) PruneColumns(parentUsedCols []expression.ExprCol) error {
 	child := p.children[0]
 	if child == nil {
 		return nil
@@ -61,18 +61,18 @@ func (p *LogicalSelection) PruneColumns(parentUsedCols []plancore.ExprCol) error
 	return child.PruneColumns(parentUsedCols)
 }
 
-func ExtractColumnsFromExpressions(result []plancore.ExprCol, exprs []plancore.Expr) []plancore.ExprCol {
+func ExtractColumnsFromExpressions(result []expression.ExprCol, exprs []expression.Expr) []expression.ExprCol {
 	for _, expr := range exprs {
 		result = extractColumns(result, expr)
 	}
 	return result
 }
 
-func extractColumns(result []plancore.ExprCol, expr plancore.Expr) []plancore.ExprCol {
+func extractColumns(result []expression.ExprCol, expr expression.Expr) []expression.ExprCol {
 	switch v := expr.(type) {
-	case *plancore.ExprCol:
+	case *expression.ExprCol:
 		result = append(result, *v)
-	case *plancore.ExprFunc:
+	case *expression.ExprFunc:
 		for _, arg := range v.Args {
 			result = extractColumns(result, arg)
 		}
@@ -80,7 +80,7 @@ func extractColumns(result []plancore.ExprCol, expr plancore.Expr) []plancore.Ex
 	return result
 }
 
-func (p *DataSource) PruneColumns(parentUsedCols []plancore.ExprCol) error {
+func (p *DataSource) PruneColumns(parentUsedCols []expression.ExprCol) error {
 	used := getUsedList(parentUsedCols, p.Schema())
 
 	for i := len(used) - 1; i >= 0; i-- {

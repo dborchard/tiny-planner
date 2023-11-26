@@ -7,12 +7,13 @@ import (
 	"github.com/blastrain/vitess-sqlparser/tidbparser/dependency/model"
 	"tiny_planner/pkg/b_catalog"
 	plancore2 "tiny_planner/pkg/c_sql/b_planner/plancore"
+	"tiny_planner/pkg/c_sql/c_exec_engine/c_expression_eval"
 )
 
 type LogicalPlan interface {
 	plancore2.Plan
-	PredicatePushDown(predicates []plancore2.Expr) LogicalPlan
-	PruneColumns([]plancore2.ExprCol) error
+	PredicatePushDown(predicates []expression.Expr) LogicalPlan
+	PruneColumns([]expression.ExprCol) error
 
 	SetChildren(...LogicalPlan)
 	Children() []LogicalPlan
@@ -53,7 +54,7 @@ func newBaseLogicalPlan(ctx context.Context, self LogicalPlan) baseLogicalPlan {
 
 type LogicalSelection struct {
 	baseLogicalPlan
-	Conditions []plancore2.Expr
+	Conditions []expression.Expr
 }
 
 func (p *LogicalSelection) Init(ctx context.Context) *LogicalSelection {
@@ -78,7 +79,7 @@ func (p *LogicalSelection) ExplainInfo() string {
 
 type LogicalProjection struct {
 	baseLogicalPlan
-	Expressions []plancore2.Expr
+	Expressions []expression.Expr
 }
 
 func (p *LogicalProjection) Init(ctx context.Context) *LogicalProjection {
@@ -106,8 +107,8 @@ type DataSource struct {
 	baseLogicalPlan
 
 	DBName   model.CIStr
-	Columns  []plancore2.ExprCol
-	allConds []plancore2.Expr
+	Columns  []expression.ExprCol
+	allConds []expression.Expr
 	table    catalog.TableDef
 }
 

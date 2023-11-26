@@ -2,7 +2,7 @@ package planlogical
 
 import (
 	"context"
-	"tiny_planner/pkg/c_sql/b_planner/plancore"
+	"tiny_planner/pkg/c_sql/c_exec_engine/c_expression_eval"
 )
 
 type ppdSolver struct{}
@@ -16,7 +16,7 @@ func (*ppdSolver) Optimize(ctx context.Context, lp LogicalPlan) (LogicalPlan, er
 	return lp, nil
 }
 
-func (p *baseLogicalPlan) PredicatePushDown(predicates []plancore.Expr) LogicalPlan {
+func (p *baseLogicalPlan) PredicatePushDown(predicates []expression.Expr) LogicalPlan {
 	if len(p.children) == 0 {
 		return p.self
 	}
@@ -27,7 +27,7 @@ func (p *baseLogicalPlan) PredicatePushDown(predicates []plancore.Expr) LogicalP
 	return newChild
 }
 
-func addSelection(p LogicalPlan, child LogicalPlan, predicates []plancore.Expr, chIdx int) {
+func addSelection(p LogicalPlan, child LogicalPlan, predicates []expression.Expr, chIdx int) {
 	_selection := LogicalSelection{Conditions: predicates}
 	selection := _selection.Init(p.SCtx())
 
@@ -35,19 +35,19 @@ func addSelection(p LogicalPlan, child LogicalPlan, predicates []plancore.Expr, 
 	p.Children()[chIdx] = selection
 }
 
-func (p *LogicalProjection) PredicatePushDown(predicates []plancore.Expr) LogicalPlan {
+func (p *LogicalProjection) PredicatePushDown(predicates []expression.Expr) LogicalPlan {
 	child := p.baseLogicalPlan.PredicatePushDown(predicates)
 	return child
 }
 
-func (p *LogicalSelection) PredicatePushDown(predicates []plancore.Expr) LogicalPlan {
+func (p *LogicalSelection) PredicatePushDown(predicates []expression.Expr) LogicalPlan {
 	child := p.children[0]
 	newChild := child.PredicatePushDown(predicates)
 	p.Conditions = append(p.Conditions, predicates...)
 	return newChild
 }
 
-func (p *DataSource) PredicatePushDown(predicates []plancore.Expr) LogicalPlan {
+func (p *DataSource) PredicatePushDown(predicates []expression.Expr) LogicalPlan {
 	p.allConds = predicates
 	return p
 }

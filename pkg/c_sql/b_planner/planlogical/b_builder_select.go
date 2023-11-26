@@ -7,8 +7,8 @@ import (
 	"github.com/blastrain/vitess-sqlparser/tidbparser/dependency/model"
 	"github.com/blastrain/vitess-sqlparser/tidbparser/parser/opcode"
 	"tiny_planner/pkg/b_catalog"
-	"tiny_planner/pkg/c_sql/b_planner/plancore"
 	"tiny_planner/pkg/c_sql/c_exec_engine/a_containers/a_types"
+	"tiny_planner/pkg/c_sql/c_exec_engine/c_expression_eval"
 )
 
 func (b *PlanBuilder) buildSelect(ctx context.Context, sel *ast.SelectStmt) (p LogicalPlan, err error) {
@@ -75,13 +75,13 @@ func (b *PlanBuilder) buildDataSource(ctx context.Context, tn *ast.TableName, as
 	_ds := DataSource{
 		DBName:  dbName,
 		table:   tbl,
-		Columns: make([]plancore.ExprCol, 0),
+		Columns: make([]expression.ExprCol, 0),
 	}
 	ds := _ds.Init(b.ctx)
 
 	schema := catalog.NewTableDef("", make([]*catalog.ColDef, 0))
 	for i, col := range tbl.ColDefs {
-		ds.Columns = append(_ds.Columns, plancore.ExprCol{
+		ds.Columns = append(_ds.Columns, expression.ExprCol{
 			Type:   col.Type,
 			ColIdx: i,
 		})
@@ -95,7 +95,7 @@ func (b *PlanBuilder) buildDataSource(ctx context.Context, tn *ast.TableName, as
 func (b *PlanBuilder) buildSelection(ctx context.Context, p LogicalPlan, where ast.ExprNode) (LogicalPlan, error) {
 	_selection := LogicalSelection{}
 	selection := _selection.Init(b.ctx)
-	selection.Conditions = make([]plancore.Expr, 0)
+	selection.Conditions = make([]expression.Expr, 0)
 
 	conditions := splitWhere(where)
 	for _, _ = range conditions {
@@ -130,24 +130,24 @@ func splitWhere(where ast.ExprNode) []ast.ExprNode {
 func (b *PlanBuilder) buildProjection(p LogicalPlan, fields []*ast.SelectField) (LogicalPlan, int, error) {
 	_proj := LogicalProjection{}
 	proj := _proj.Init(b.ctx)
-	proj.Expressions = make([]plancore.Expr, 0, len(fields))
+	proj.Expressions = make([]expression.Expr, 0, len(fields))
 	schema := catalog.NewTableDef("", make([]*catalog.ColDef, 0))
 
 	for _, field := range fields {
 		switch v := field.Expr.(type) {
 		case *ast.ColumnNameExpr:
 			//colName := v.Name.Name.L
-			proj.Expressions = append(proj.Expressions, &plancore.ExprCol{
+			proj.Expressions = append(proj.Expressions, &expression.ExprCol{
 				Type:   types.T_int32.ToType(),
 				ColIdx: 0,
 			})
 			_ = schema.AppendCol(v.Name.Name.L, types.T_int32.ToType())
 		case *ast.FuncCallExpr:
-			proj.Expressions = append(proj.Expressions, &plancore.ExprFunc{
+			proj.Expressions = append(proj.Expressions, &expression.ExprFunc{
 				Name: v.FnName.L,
-				Args: plancore.ArgsToExprs(v.Args),
+				Args: expression.ArgsToExprs(v.Args),
 			})
-			schema.ColDefs = append(schema.ColDefs, plancore.ArgsToColDefs(v.Args)...)
+			schema.ColDefs = append(schema.ColDefs, expression.ArgsToColDefs(v.Args)...)
 		}
 
 	}
