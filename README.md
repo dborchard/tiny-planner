@@ -33,8 +33,8 @@ Inspired from [TinySQL](https://github.com/talent-plan/tinysql/tree/course/plann
 
 ### `Execution Engine` Reference Projects
 - [TinySQL](https://github.com/talent-plan/tinysql/blob/4ec59ec661086305be82f885768490706a4c4723/expression/builtin.go#L332)
+- [PranaDB](https://github.com/cashapp/pranadb/blob/b0d98ad1c632b88da65ad2bf0d4ecb68be89df5e/tidb/expression/builtin.go#L524)
 - [MatrixOrigin](https://github.com/matrixorigin/matrixone/blob/67141f025433e32fe0343fba1035e9232fb20f11/pkg/sql/plan/function/function.go#L34)
 - [CockroachDB](https://github.com/cockroachdb/cockroach/blob/01e65172dcb17384db33e8229d16461f6f99c01d/pkg/sql/sem/builtins/builtinsregistry/builtins_registry.go#L21)
-- [PranaDB](https://github.com/cashapp/pranadb/blob/b0d98ad1c632b88da65ad2bf0d4ecb68be89df5e/tidb/expression/builtin.go#L524)
 - [Vitess](https://github.com/vitessio/vitess/blob/faf9815b56a7d0d46903cab1d3730c8bd0ba618a/go/vt/vtgate/evalengine/translate_builtin.go#L64)
 
