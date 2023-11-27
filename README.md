@@ -13,8 +13,9 @@ Inspired from [TinySQL](https://github.com/talent-plan/tinysql/tree/course/plann
 - [x] Implement Parser
 - [x] Implement Logical Plan Builder
 - [x] Implement Logical Plan `Rule Based` Optimizer
-- [ ] Implement Operators
-- [ ] Implement Expression Evaluation
+- [x] Implement Operators
+- [x] Implement Expression Evaluation
+- [x] Implement Expression Builder
 - [ ] Implement Physical Plan Builder 
 - [ ] Implement Physical Plan `Cascade` Optimizer
 

@@ -7,7 +7,7 @@ import (
 	"github.com/blastrain/vitess-sqlparser/tidbparser/dependency/model"
 	"github.com/blastrain/vitess-sqlparser/tidbparser/parser/opcode"
 	"tiny_planner/pkg/b_catalog"
-	"tiny_planner/pkg/c_sql/c_exec_engine/a_containers/a_types"
+	"tiny_planner/pkg/c_sql/c_exec_engine/a_coldata/a_types"
 	"tiny_planner/pkg/c_sql/c_exec_engine/c_expression_eval"
 )
 

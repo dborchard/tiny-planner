@@ -2,8 +2,8 @@ package batch
 
 import (
 	"fmt"
-	"tiny_planner/pkg/c_sql/c_exec_engine/a_containers/a_types"
-	"tiny_planner/pkg/c_sql/c_exec_engine/a_containers/b_vector"
+	"tiny_planner/pkg/c_sql/c_exec_engine/a_coldata/a_types"
+	"tiny_planner/pkg/c_sql/c_exec_engine/a_coldata/b_vector"
 )
 
 func MockBatch(colCnt int, rowCnt int, rowStart int) *Batch {
