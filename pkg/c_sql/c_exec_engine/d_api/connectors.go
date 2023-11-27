@@ -6,7 +6,7 @@ import (
 )
 
 type StorageEngine interface {
-	Create(ctx context.Context, name string) error
+	CreateTable(ctx context.Context, name string) error
 }
 
 type StorageEngineReader interface {

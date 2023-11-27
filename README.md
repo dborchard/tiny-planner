@@ -10,13 +10,14 @@ Inspired from [TinySQL](https://github.com/talent-plan/tinysql/tree/course/plann
 
 
 ### TODO
-- [x] Implement Parser
-- [x] Implement Logical Plan Builder
-- [x] Implement Logical Plan `Rule Based` Optimizer
-- [x] Implement Operators
-- [x] Implement Expression Evaluation
-- [x] Implement Expression Builder
-- [ ] Implement Physical Plan Builder 
+- [x] Implement Parser from `TinySQL`
+- [x] Implement Logical Plan Builder from `TinySQL`
+- [x] Implement Logical Plan `Rule Based` Optimizer from `TinySQL`
+- [x] Implement Operators from `MatrixOrigin` and `CockroachDB`
+- [x] Implement Expression Evaluation from `MatrixOrigin`
+- [x] Implement Expression Builder from `TinySQL`
+- [ ] Implement Execution Pipeline,Stage from `LinDB`
+- [ ] Implement Physical Plan Builder and Covert to Executors
 - [ ] Implement Physical Plan `Cascade` Optimizer
 
 ### `Planner` Reference Projects

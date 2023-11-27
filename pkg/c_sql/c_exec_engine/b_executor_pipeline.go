@@ -11,7 +11,7 @@ type Pipeline struct {
 	executors []Executor
 }
 
-func New(cols []string, execs []Executor) *Pipeline {
+func NewPipeline(cols []string, execs []Executor) *Pipeline {
 	return &Pipeline{
 		colNames:  cols,
 		executors: execs,
