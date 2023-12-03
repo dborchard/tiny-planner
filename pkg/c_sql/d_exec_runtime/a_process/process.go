@@ -25,8 +25,7 @@ type Process struct {
 	Cancel context.CancelFunc
 }
 
-// New creates a new Process.
-// A process stores the execution context.
+// New creates a new Process. A process stores the execution context.
 func New(ctx context.Context) *Process {
 	return &Process{Ctx: ctx}
 }
