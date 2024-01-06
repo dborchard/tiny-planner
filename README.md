@@ -19,6 +19,7 @@ Inspired from [TinySQL](https://github.com/talent-plan/tinysql/tree/course/plann
 - [ ] Implement Execution Pipeline,Stage from `LinDB`
 - [ ] Implement Physical Plan Builder and Covert to Executors
 - [ ] Implement Physical Plan `Cascade` Optimizer
+- [ ] Implement Execution Runtime, Infine Process Read
 
 ### `Planner` Reference Projects
 - [PingCAP-TinySQL](https://github.com/talent-plan/tinysql/tree/course/planner)
