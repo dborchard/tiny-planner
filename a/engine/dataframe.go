@@ -12,6 +12,7 @@ type DataFrame interface {
 	Aggregate(groupBy []LogicalExpr, aggregateExpr []AggregateExpr) DataFrame
 	Schema() Schema
 	LogicalPlan() LogicalPlan
+	Show()
 }
 
 type DataFrameImpl struct {
