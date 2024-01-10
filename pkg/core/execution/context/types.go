@@ -1,8 +1,8 @@
 package context
 
 import (
-	"tiny_planner/a/engine"
 	"tiny_planner/pkg/core/catalog"
+	"tiny_planner/pkg/core/dataframe"
 	"tiny_planner/pkg/core/datasource"
 	"tiny_planner/pkg/core/physical_optimizer"
 	"tiny_planner/pkg/expr/logical_plan"
@@ -19,7 +19,7 @@ func (c *SessionContext) RegisterCsv(name string, tablePath string, options data
 
 }
 
-func (c *SessionContext) Sql(sql string) engine.DataFrame {
+func (c *SessionContext) Sql(sql string) dataframe.DataFrame {
 	return nil
 }
 
