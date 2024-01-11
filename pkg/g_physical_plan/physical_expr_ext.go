@@ -2,7 +2,7 @@ package exprPhy
 
 import (
 	exprLogi "tiny_planner/pkg/f_logical_plan"
-	containers "tiny_planner/pkg/j_containers"
+	containers "tiny_planner/pkg/k_containers"
 )
 
 func FromLogicalToPhysical(e exprLogi.LogicalExpr, schema containers.Schema) Expression {

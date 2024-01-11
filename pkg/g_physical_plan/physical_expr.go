@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/apache/arrow/go/v12/arrow"
 	"strconv"
-	containers "tiny_planner/pkg/j_containers"
+	containers "tiny_planner/pkg/k_containers"
 )
 
 type Expression interface {
