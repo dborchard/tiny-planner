@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"github.com/apache/arrow/go/v12/arrow"
+	arrow2 "tiny_planner/pkg/core/arrow_array"
 )
 
 type LiteralValueVector struct {
@@ -26,7 +27,7 @@ func (v LiteralValueVector) Len() int {
 	return v.size
 }
 
-func (s Schema) Select(projection []string) Schema {
+func (s arrow2.Schema) Select(projection []string) arrow2.Schema {
 	fields := make([]arrow.Field, 0)
 	for _, columnName := range projection {
 		field, ok := s.FieldsByName(columnName)
@@ -35,5 +36,5 @@ func (s Schema) Select(projection []string) Schema {
 		}
 	}
 	new := arrow.NewSchema(fields, nil)
-	return Schema{new}
+	return arrow2.Schema{new}
 }

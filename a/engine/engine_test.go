@@ -4,31 +4,35 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"tiny_planner/pkg/a_datafusion/expr"
+	logical_plan2 "tiny_planner/pkg/a_datafusion/expr/logicalplan"
+	"tiny_planner/pkg/core/common"
+	"tiny_planner/pkg/expr/logical_plan"
 )
 
 func TestLogicalPlan(t *testing.T) {
 	// data source
-	csv := &CsvDataSource{"employees.csv", Schema{}, true, 100}
+	csv := &CsvDataSource{"employees.csv", common.DFSchema{}, true, 100}
 
 	// FROM
-	scan := Scan{"employee", csv, []string{}}
+	scan := logical_plan2.Scan{"employee", csv, []string{}}
 
 	// WHERE
-	filterExpr := Eq(Column{"state"}, LiteralString{"CO"})
+	filterExpr := expr.Eq(expr.Column{"state"}, expr.LiteralString{"CO"})
 
-	selection := Selection{scan, filterExpr}
+	selection := logical_plan2.Selection{scan, filterExpr}
 
-	projection := []LogicalExpr{
-		Column{"id"},
-		Column{"first_name"},
-		Column{"last_name"},
-		Column{"state"},
-		Column{"salary"},
+	projection := []logical_plan.LogicalExpr{
+		expr.Column{"id"},
+		expr.Column{"first_name"},
+		expr.Column{"last_name"},
+		expr.Column{"state"},
+		expr.Column{"salary"},
 	}
 
-	plan := Projection{selection, projection}
+	plan := logical_plan2.Projection{selection, projection}
 
-	actual := Format(plan, 0)
+	actual := logical_plan2.Format(plan, 0)
 	fmt.Println(actual)
 
 	expected := `Projection: #id, #first_name, #last_name, #state, #salary

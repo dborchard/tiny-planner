@@ -1,4 +1,4 @@
-package logical_plan
+package logicalplan
 
 type ScalarUDF struct {
 }
