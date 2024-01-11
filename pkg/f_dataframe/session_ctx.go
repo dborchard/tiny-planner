@@ -1,10 +1,9 @@
 package dataframe
 
 import (
-	"tiny_planner/pkg/a_datafusion/common"
-	"tiny_planner/pkg/a_datafusion/core/datasource"
-	"tiny_planner/pkg/a_datafusion/exprLogi"
-	"tiny_planner/pkg/a_datafusion/exprPhy"
+	containers "tiny_planner/pkg/a_containers"
+	datasource "tiny_planner/pkg/c_datasource"
+	exprLogi "tiny_planner/pkg/d_exprLogi"
 )
 
 type SessionContext struct {
@@ -12,8 +11,12 @@ type SessionContext struct {
 	State     SessionState
 }
 
-func New() *SessionContext {
-	return &SessionContext{}
+func NewContext() *SessionContext {
+	return &SessionContext{
+		State: SessionState{
+			QueryPlanner: DefaultQueryPlanner{},
+		},
+	}
 }
 
 func (c *SessionContext) ReadCsv(path string, options datasource.CsvReadOptions) IDataFrame {
@@ -35,7 +38,7 @@ func (c *SessionContext) ReadCsv(path string, options datasource.CsvReadOptions)
 
 	src := datasource.CsvDataSource{
 		Filename:   path,
-		Sch:        common.Schema{Schema: schema},
+		Sch:        containers.Schema{Schema: schema},
 		HasHeaders: options.HasHeader,
 		BatchSize:  1024,
 	}
@@ -49,8 +52,4 @@ func (c *SessionContext) RegisterCsv(name string, tablePath string, options data
 
 func (c *SessionContext) Sql(sql string) IDataFrame {
 	return nil
-}
-
-type QueryPlanner interface {
-	CreatePhysicalPlan(lp exprLogi.LogicalPlan, state SessionState) exprPhy.PhysicalPlan
 }

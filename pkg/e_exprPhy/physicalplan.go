@@ -3,14 +3,14 @@ package exprPhy
 import (
 	"fmt"
 	"strings"
-	"tiny_planner/pkg/a_datafusion/common"
-	"tiny_planner/pkg/a_datafusion/core/datasource"
+	containers "tiny_planner/pkg/a_containers"
+	datasource "tiny_planner/pkg/c_datasource"
 )
 
 type PhysicalPlan interface {
-	Schema() common.Schema
+	Schema() containers.Schema
 	Children() []PhysicalPlan
-	Execute() []common.Batch
+	Execute() []containers.Batch
 }
 
 var _ PhysicalPlan = ScanExec{}
@@ -20,16 +20,19 @@ var _ PhysicalPlan = SelectionExec{}
 //----------------- ScanExec -----------------
 
 type ScanExec struct {
-	DataSource datasource.DataSource
+	Source     datasource.DataSource
 	Projection []string
 }
 
-func (s ScanExec) Schema() common.Schema {
-	return s.DataSource.Schema().Select(s.Projection)
+func (s ScanExec) Schema() containers.Schema {
+	if len(s.Projection) == 0 {
+		return s.Source.Schema()
+	}
+	return s.Source.Schema().Select(s.Projection)
 }
 
-func (s ScanExec) Execute() []common.Batch {
-	return s.DataSource.Scan(s.Projection)
+func (s ScanExec) Execute() []containers.Batch {
+	return s.Source.Scan(s.Projection)
 }
 
 func (s ScanExec) Children() []PhysicalPlan {
@@ -37,14 +40,14 @@ func (s ScanExec) Children() []PhysicalPlan {
 }
 
 func (s ScanExec) String() string {
-	return "ScanExec: common.Sch=" + s.Schema().String() + ", projection=" + strings.Join(s.Projection, ",")
+	return "ScanExec: Sch=" + s.Schema().String() + ", projection=" + strings.Join(s.Projection, ",")
 }
 
 //----------------- ProjectionExec -----------------
 
 type ProjectionExec struct {
 	Input PhysicalPlan
-	Sch   common.Schema
+	Sch   containers.Schema
 	Proj  []Expression
 }
 
@@ -52,20 +55,20 @@ func (p ProjectionExec) String() string {
 	return fmt.Sprintf("ProjectionExec: %s", p.Proj)
 }
 
-func (p ProjectionExec) Schema() common.Schema {
+func (p ProjectionExec) Schema() containers.Schema {
 	return p.Sch
 }
 
-func (p ProjectionExec) Execute() []common.Batch {
+func (p ProjectionExec) Execute() []containers.Batch {
 	input := p.Input.Execute()
-	output := make([]common.Batch, len(input))
+	output := make([]containers.Batch, len(input))
 
 	for i, batch := range input {
-		vectors := make([]common.Vector, len(p.Proj))
+		vectors := make([]containers.Vector, len(p.Proj))
 		for j, expr := range p.Proj {
 			vectors[j] = expr.Evaluate(batch)
 		}
-		output[i] = common.Batch{Schema: p.Sch, Fields: vectors}
+		output[i] = containers.Batch{Schema: p.Sch, Fields: vectors}
 	}
 	return output
 }
@@ -77,11 +80,11 @@ func (p ProjectionExec) Children() []PhysicalPlan {
 //----------------- SelectionExec -----------------
 
 type SelectionExec struct {
-	Input PhysicalPlan
-	Expr  Expression
+	Input  PhysicalPlan
+	Filter Expression
 }
 
-func (s SelectionExec) Schema() common.Schema {
+func (s SelectionExec) Schema() containers.Schema {
 	return s.Input.Schema()
 }
 
@@ -89,28 +92,28 @@ func (s SelectionExec) Children() []PhysicalPlan {
 	return []PhysicalPlan{s.Input}
 }
 
-func (s SelectionExec) Execute() []common.Batch {
+func (s SelectionExec) Execute() []containers.Batch {
 	input := s.Input.Execute()
-	output := make([]common.Batch, len(input))
+	output := make([]containers.Batch, len(input))
 	for i, batch := range input {
-		result := s.Expr.Evaluate(batch)
+		result := s.Filter.Evaluate(batch)
 		schema := batch.Schema
 		columnCount := len(schema.Fields())
-		filtered := make([]common.Vector, len(batch.Fields))
+		filtered := make([]containers.Vector, len(batch.Fields))
 		for j := 0; j < columnCount; j++ {
 			filtered[j] = filter(batch.Fields[j], result)
 		}
-		output[i] = common.Batch{Schema: batch.Schema, Fields: filtered}
+		output[i] = containers.Batch{Schema: batch.Schema, Fields: filtered}
 	}
 	return output
 }
 
-func filter(vector common.Vector, selection common.Vector) common.Vector {
+func filter(vector containers.Vector, selection containers.Vector) containers.Vector {
 	var filteredVector []any
 	for i := 0; i < selection.Len(); i++ {
 		if selection.GetValue(i).(bool) {
 			filteredVector = append(filteredVector, vector.GetValue(i))
 		}
 	}
-	return common.NewArray(vector.DataType(), len(filteredVector), filteredVector)
+	return containers.NewArray(vector.DataType(), len(filteredVector), filteredVector)
 }

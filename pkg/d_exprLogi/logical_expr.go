@@ -119,12 +119,12 @@ func (e AggregateExpr) ToField(input LogicalPlan) arrow.Field {
 // ---------- Literals ----------
 
 type LiteralString struct {
-	Str string
+	Val string
 }
 
 func (lit LiteralString) ToField(input LogicalPlan) arrow.Field {
 	return arrow.Field{
-		Name:     lit.Str,
+		Name:     lit.Val,
 		Type:     arrow.BinaryTypes.String,
 		Nullable: true,
 		Metadata: arrow.Metadata{},
@@ -132,11 +132,11 @@ func (lit LiteralString) ToField(input LogicalPlan) arrow.Field {
 }
 
 func (lit LiteralString) String() string {
-	return fmt.Sprintf("'%s'", lit.Str)
+	return fmt.Sprintf("'%s'", lit.Val)
 }
 
 type LiteralInt64 struct {
-	N int64
+	Val int64
 }
 
 func (lit LiteralInt64) ToField(input LogicalPlan) arrow.Field {
@@ -149,11 +149,11 @@ func (lit LiteralInt64) ToField(input LogicalPlan) arrow.Field {
 }
 
 func (lit LiteralInt64) String() string {
-	return strconv.Itoa(int(lit.N))
+	return strconv.Itoa(int(lit.Val))
 }
 
 type LiteralFloat64 struct {
-	n float64
+	Val float64
 }
 
 func (lit LiteralFloat64) ToField(input LogicalPlan) arrow.Field {
@@ -166,5 +166,5 @@ func (lit LiteralFloat64) ToField(input LogicalPlan) arrow.Field {
 }
 
 func (lit LiteralFloat64) String() string {
-	return strconv.FormatFloat(lit.n, 'f', -1, 64)
+	return strconv.FormatFloat(lit.Val, 'f', -1, 64)
 }

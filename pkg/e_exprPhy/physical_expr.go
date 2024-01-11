@@ -4,13 +4,22 @@ import (
 	"fmt"
 	"github.com/apache/arrow/go/v12/arrow"
 	"strconv"
-	"tiny_planner/pkg/a_datafusion/common"
+	containers "tiny_planner/pkg/a_containers"
 )
 
 type Expression interface {
-	Evaluate(input common.Batch) common.Vector
+	Evaluate(input containers.Batch) containers.Vector
 	String() string
 }
+
+var _ Expression = ColumnExpression{}
+var _ Expression = LiteralInt64Expression{}
+var _ Expression = LiteralFloat64Expression{}
+var _ Expression = LiteralStringExpression{}
+var _ Expression = BinaryExpression{}
+
+//var _ Expression = MathExpression{}
+//var _ Expression = AggregateExpression{}
 
 // ----------- ColumnExpression -------------
 
@@ -18,7 +27,7 @@ type ColumnExpression struct {
 	i int
 }
 
-func (col ColumnExpression) Evaluate(input common.Batch) common.Vector {
+func (col ColumnExpression) Evaluate(input containers.Batch) containers.Vector {
 	return input.Field(col.i)
 }
 
@@ -36,8 +45,8 @@ func (lit LiteralInt64Expression) String() string {
 	return strconv.FormatInt(lit.value, 10)
 }
 
-func (lit LiteralInt64Expression) Evaluate(input common.Batch) common.Vector {
-	return common.LiteralValueVector{ArrowType: arrow.PrimitiveTypes.Int64, Value: lit.value, Size: input.RowCount()}
+func (lit LiteralInt64Expression) Evaluate(input containers.Batch) containers.Vector {
+	return containers.LiteralValueVector{ArrowType: arrow.PrimitiveTypes.Int64, Value: lit.value, Size: input.RowCount()}
 }
 
 // ----------- LiteralFloat64Expression -------------
@@ -50,8 +59,8 @@ func (lit LiteralFloat64Expression) String() string {
 	return strconv.FormatFloat(lit.value, 'f', -1, 64)
 }
 
-func (lit LiteralFloat64Expression) Evaluate(input common.Batch) common.Vector {
-	return common.LiteralValueVector{ArrowType: arrow.PrimitiveTypes.Float64, Value: lit.value, Size: input.RowCount()}
+func (lit LiteralFloat64Expression) Evaluate(input containers.Batch) containers.Vector {
+	return containers.LiteralValueVector{ArrowType: arrow.PrimitiveTypes.Float64, Value: lit.value, Size: input.RowCount()}
 }
 
 // ----------- LiteralStringExpression -------------
@@ -60,8 +69,8 @@ type LiteralStringExpression struct {
 	value string
 }
 
-func (lit LiteralStringExpression) Evaluate(input common.Batch) common.Vector {
-	return common.LiteralValueVector{ArrowType: arrow.BinaryTypes.String, Value: lit.value, Size: input.RowCount()}
+func (lit LiteralStringExpression) Evaluate(input containers.Batch) containers.Vector {
+	return containers.LiteralValueVector{ArrowType: arrow.BinaryTypes.String, Value: lit.value, Size: input.RowCount()}
 }
 
 func (lit LiteralStringExpression) String() string {
@@ -77,11 +86,11 @@ type BinaryExpression struct {
 }
 
 type BinaryExpressionEvaluator interface {
-	Evaluate(input common.Batch) common.Vector
-	evaluate(l, r common.Vector) common.Vector
+	Evaluate(input containers.Batch) containers.Vector
+	evaluate(l, r containers.Vector) containers.Vector
 }
 
-func (e BinaryExpression) Evaluate(input common.Batch) common.Vector {
+func (e BinaryExpression) Evaluate(input containers.Batch) containers.Vector {
 	ll := e.l.Evaluate(input)
 	rr := e.r.Evaluate(input)
 	if ll.Len() != rr.Len() {
@@ -93,31 +102,35 @@ func (e BinaryExpression) Evaluate(input common.Batch) common.Vector {
 	return e.evaluate(ll, rr)
 }
 
-func (e BinaryExpression) evaluate(l, r common.Vector) common.Vector {
+func (e BinaryExpression) evaluate(l, r containers.Vector) containers.Vector {
 	return e.BinaryExpressionEvaluator.evaluate(l, r)
 }
 
-//----------- MathExpression -------------
-
-type MathExpression struct {
-	l Expression
-	r Expression
-	MathExpressionEvaluator
+func (e BinaryExpression) String() string {
+	return e.l.String() + "+" + e.r.String()
 }
+
+//----------- MathExpression -------------
 
 type MathExpressionEvaluator interface {
 	Expression
 	evaluate(l any, r any, arrowType arrow.DataType) any
 }
 
-func (e MathExpression) Evaluate(l common.Vector, r common.Vector) common.Vector {
+type MathExpression struct {
+	MathExpressionEvaluator
+	l Expression
+	r Expression
+}
+
+func (e MathExpression) Evaluate(l containers.Vector, r containers.Vector) containers.Vector {
 	values := make([]any, l.Len())
 	for i := 0; i < l.Len(); i++ {
 		value := e.evaluate(l.GetValue(i), r.GetValue(i), l.DataType())
 		values[i] = value
 	}
 
-	return common.NewArray(l.DataType(), l.Len(), values)
+	return containers.NewArray(l.DataType(), l.Len(), values)
 }
 
 type AddExpression struct {
@@ -126,17 +139,17 @@ type AddExpression struct {
 
 func (e AddExpression) Evaluate(l any, r any, arrowType arrow.DataType) any {
 	switch arrowType {
-	case common.Int64:
+	case containers.Int64:
 		return l.(int64) + r.(int64)
-	case common.Int32:
+	case containers.Int32:
 		return l.(int32) + r.(int32)
-	case common.Int16:
+	case containers.Int16:
 		return l.(int16) + r.(int16)
-	case common.Int8:
+	case containers.Int8:
 		return l.(int8) + r.(int8)
-	case common.Float64:
+	case containers.Float64:
 		return l.(float64) + r.(float64)
-	case common.Float32:
+	case containers.Float32:
 		return l.(float32) + r.(float32)
 	default:
 		panic("unsupported type")

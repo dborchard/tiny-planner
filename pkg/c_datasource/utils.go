@@ -43,7 +43,7 @@ func InferArrowSchemaFromCSV(filePath string) (schema *arrow.Schema, err error) 
 	// 3. Create Arrow Schema
 	fields := make([]arrow.Field, len(header))
 	for i, name := range header {
-		fields[i] = arrow.Field{Name: name, Type: arrow.PrimitiveTypes.Float64}
+		fields[i] = arrow.Field{Name: name, Type: arrow.BinaryTypes.String}
 	}
 
 	schema = arrow.NewSchema(fields, nil)

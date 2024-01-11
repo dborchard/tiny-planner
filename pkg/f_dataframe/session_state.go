@@ -1,18 +1,19 @@
 package dataframe
 
 import (
-	"tiny_planner/pkg/a_datafusion/core/execution/context"
-	"tiny_planner/pkg/a_datafusion/exprLogi"
-	"tiny_planner/pkg/a_datafusion/exprPhy"
-	"tiny_planner/pkg/a_datafusion/optimizer"
+	"time"
+	execution "tiny_planner/pkg/b_exec_runtime"
+	exprLogi "tiny_planner/pkg/d_exprLogi"
+	exprPhy "tiny_planner/pkg/e_exprPhy"
 )
 
 type SessionState struct {
-	SessionID string
+	SessionID        string
+	SessionStartTime time.Time
+	QueryPlanner     QueryPlanner
 
-	LogicalOptimizer optimizer.Optimizer
+	//LogicalOptimizer optimizer.Optimizer
 
-	//QueryPlanner     QueryPlanner
 	//PhysicalOptimizer physical_optimizer.PhysicalOptimizer
 	//CatalogList       catalog.List
 	//AggFunctions map[string]AggregateUDF
@@ -23,10 +24,10 @@ type SessionState struct {
 	//RuntimeEnv RuntimeEnv
 }
 
-func (s SessionState) TaskContext() context.TaskContext {
-	return context.TaskContext{}
+func (s SessionState) TaskContext() execution.TaskContext {
+	return execution.TaskContext{}
 }
 
 func (s SessionState) CreatePhysicalPlan(plan exprLogi.LogicalPlan) exprPhy.PhysicalPlan {
-	return nil
+	return s.QueryPlanner.CreatePhysicalPlan(plan, s)
 }

@@ -1,4 +1,4 @@
-package common
+package containers
 
 import (
 	"fmt"
@@ -15,7 +15,16 @@ type Vector interface {
 
 var _ Vector = LiteralValueVector{}
 
-//-----------------LiteralValueVector------------------
+// -----------------LiteralValueVector------------------
+
+func NewLiteralValueVector(arrowType arrow.DataType, value any, size int) LiteralValueVector {
+	return LiteralValueVector{
+		ArrowType: arrowType,
+		Value:     value,
+		Size:      size,
+	}
+
+}
 
 type LiteralValueVector struct {
 	ArrowType arrow.DataType

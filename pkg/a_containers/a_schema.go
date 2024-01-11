@@ -1,4 +1,4 @@
-package common
+package containers
 
 import "github.com/apache/arrow/go/v12/arrow"
 
@@ -16,4 +16,13 @@ func (s Schema) Select(projection []string) Schema {
 	}
 	newSchema := arrow.NewSchema(fields, nil)
 	return Schema{newSchema}
+}
+
+func (s Schema) IndexOf(name string) int {
+	for i, field := range s.Fields() {
+		if field.Name == name {
+			return i
+		}
+	}
+	return -1
 }

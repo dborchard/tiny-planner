@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"github.com/apache/arrow/go/v12/arrow"
 	"strings"
-	"tiny_planner/pkg/a_datafusion/common"
-	"tiny_planner/pkg/a_datafusion/core/datasource"
+	containers "tiny_planner/pkg/a_containers"
+	datasource "tiny_planner/pkg/c_datasource"
 )
 
 type LogicalPlan interface {
-	Schema() common.Schema
+	Schema() containers.Schema
 	Children() []LogicalPlan
 	String() string
 }
@@ -27,7 +27,7 @@ type Scan struct {
 	Projection []string
 }
 
-func (s Scan) Schema() common.Schema {
+func (s Scan) Schema() containers.Schema {
 	schema := s.Source.Schema()
 	if len(s.Projection) == 0 {
 		return schema
@@ -54,12 +54,12 @@ type Projection struct {
 	Expr  []LogicalExpr
 }
 
-func (p Projection) Schema() common.Schema {
+func (p Projection) Schema() containers.Schema {
 	var fields []arrow.Field
 	for _, e := range p.Expr {
 		fields = append(fields, e.ToField(p.Input))
 	}
-	return common.Schema{Schema: arrow.NewSchema(fields, nil)}
+	return containers.Schema{Schema: arrow.NewSchema(fields, nil)}
 }
 
 func (p Projection) Children() []LogicalPlan {
@@ -78,11 +78,11 @@ func (p Projection) String() string {
 // ----------- Selection -------------
 
 type Selection struct {
-	Input LogicalPlan
-	Expr  LogicalExpr
+	Input  LogicalPlan
+	Filter LogicalExpr
 }
 
-func (s Selection) Schema() common.Schema {
+func (s Selection) Schema() containers.Schema {
 	return s.Input.Schema()
 }
 
@@ -91,7 +91,7 @@ func (s Selection) Children() []LogicalPlan {
 }
 
 func (s Selection) String() string {
-	return fmt.Sprintf("Filter: %s", s.Expr.String())
+	return fmt.Sprintf("Filter: %s", s.Filter.String())
 }
 
 // ----------- Agg -------------
@@ -102,7 +102,7 @@ type Aggregate struct {
 	AggregateExpr []AggregateExpr
 }
 
-func (a Aggregate) Schema() common.Schema {
+func (a Aggregate) Schema() containers.Schema {
 	var fields []arrow.Field
 	for _, e := range a.GroupExpr {
 		fields = append(fields, e.ToField(a.Input))
@@ -110,7 +110,7 @@ func (a Aggregate) Schema() common.Schema {
 	for _, e := range a.AggregateExpr {
 		fields = append(fields, e.ToField(a.Input))
 	}
-	return common.Schema{Schema: arrow.NewSchema(fields, nil)}
+	return containers.Schema{Schema: arrow.NewSchema(fields, nil)}
 }
 
 func (a Aggregate) Children() []LogicalPlan {

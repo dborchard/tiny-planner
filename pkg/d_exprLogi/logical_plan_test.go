@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
-	"tiny_planner/pkg/a_datafusion/core/datasource"
+	datasource "tiny_planner/pkg/c_datasource"
 )
 
 func TestLogicalPlan_LogicalPlan(t *testing.T) {
@@ -15,8 +15,8 @@ func TestLogicalPlan_LogicalPlan(t *testing.T) {
 		csv := datasource.CsvDataSource{Filename: "employees.csv", HasHeaders: true, BatchSize: 100}
 		scan := Scan{Path: "employee", Source: &csv, Projection: []string{}} // 1. FROM
 
-		filterExpr := Eq(Column{Name: "state"}, LiteralString{Str: "CO"})
-		selection := Selection{Input: scan, Expr: filterExpr} // 2. WHERE
+		filterExpr := Eq(Column{Name: "state"}, LiteralString{Val: "CO"})
+		selection := Selection{Input: scan, Filter: filterExpr} // 2. WHERE
 
 		projExpr := []LogicalExpr{
 			Column{Name: "id"},

@@ -1,4 +1,4 @@
-package common
+package containers
 
 // Batch represents a batch of columnar data.
 type Batch struct {

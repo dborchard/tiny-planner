@@ -2,10 +2,10 @@ package dataframe
 
 import (
 	"fmt"
-	"tiny_planner/pkg/a_datafusion/common"
-	"tiny_planner/pkg/a_datafusion/core/execution/context"
-	"tiny_planner/pkg/a_datafusion/exprLogi"
-	"tiny_planner/pkg/a_datafusion/exprPhy"
+	containers "tiny_planner/pkg/a_containers"
+	"tiny_planner/pkg/b_exec_runtime"
+	exprLogi "tiny_planner/pkg/d_exprLogi"
+	exprPhy "tiny_planner/pkg/e_exprPhy"
 )
 
 type IDataFrame interface {
@@ -13,8 +13,8 @@ type IDataFrame interface {
 	Filter(expr exprLogi.LogicalExpr) IDataFrame
 	Aggregate(groupBy []exprLogi.LogicalExpr, aggregateExpr []exprLogi.AggregateExpr) IDataFrame
 
-	Schema() common.Schema
-	Collect() []common.Batch
+	Schema() containers.Schema
+	Collect() []containers.Batch
 	Show()
 
 	LogicalPlan() exprLogi.LogicalPlan
@@ -32,24 +32,24 @@ func NewDataFrame(sessionState SessionState, plan exprLogi.LogicalPlan) *DataFra
 
 func (df *DataFrame) Project(proj []exprLogi.LogicalExpr) IDataFrame {
 	newPlan := exprLogi.From(df.plan).Project(proj).Build()
-	return &DataFrame{plan: newPlan}
+	return &DataFrame{plan: newPlan, sessionState: df.sessionState}
 }
 
 func (df *DataFrame) Filter(predicate exprLogi.LogicalExpr) IDataFrame {
 	newPlan := exprLogi.From(df.plan).Filter(predicate).Build()
-	return &DataFrame{plan: newPlan}
+	return &DataFrame{plan: newPlan, sessionState: df.sessionState}
 }
 
 func (df *DataFrame) Aggregate(groupBy []exprLogi.LogicalExpr, aggExpr []exprLogi.AggregateExpr) IDataFrame {
 	newPlan := exprLogi.From(df.plan).Aggregate(groupBy, aggExpr).Build()
-	return &DataFrame{plan: newPlan}
+	return &DataFrame{plan: newPlan, sessionState: df.sessionState}
 }
 
-func (df *DataFrame) TaskContext() context.TaskContext {
+func (df *DataFrame) TaskContext() execution.TaskContext {
 	return df.sessionState.TaskContext()
 }
 
-func (df *DataFrame) Schema() common.Schema {
+func (df *DataFrame) Schema() containers.Schema {
 	return df.plan.Schema()
 }
 
@@ -57,12 +57,14 @@ func (df *DataFrame) LogicalPlan() exprLogi.LogicalPlan {
 	return df.plan
 }
 
-func (df *DataFrame) Collect() []common.Batch {
-	//taskCtx := df.TaskContext()
-	//physicalPlan := df.PhysicalPlan()
-	//res, _ := physicalplan.Collect(taskCtx, physicalPlan)
-	//return res
-	return nil
+func (df *DataFrame) Collect() []containers.Batch {
+	taskCtx := df.TaskContext()
+	physicalPlan := df.PhysicalPlan()
+	res, err := exprPhy.Collect(taskCtx, physicalPlan)
+	if err != nil {
+		panic(err)
+	}
+	return res
 }
 
 func (df *DataFrame) Show() {
