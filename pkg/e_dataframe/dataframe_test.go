@@ -3,8 +3,8 @@ package dataframe
 import (
 	"fmt"
 	"testing"
-	datasource "tiny_planner/pkg/b_datasource"
-	exprLogi "tiny_planner/pkg/c_expr_logical"
+	exprLogi "tiny_planner/pkg/f_expr_logical"
+	datasource "tiny_planner/pkg/i_datasource"
 )
 
 func TestLogicalPlan_DataFrame(t *testing.T) {

@@ -1,8 +1,8 @@
 package dataframe
 
 import (
-	exprLogi "tiny_planner/pkg/c_expr_logical"
-	exprPhy "tiny_planner/pkg/e_expr_physcial"
+	exprLogi "tiny_planner/pkg/f_expr_logical"
+	exprPhy "tiny_planner/pkg/g_expr_physcial"
 )
 
 type QueryPlanner interface {
