@@ -2,45 +2,50 @@ package dataframe
 
 import (
 	"fmt"
-	expr2 "tiny_planner/pkg/a_datafusion/expr"
-	"tiny_planner/pkg/a_datafusion/expr/logicalplan"
-	"tiny_planner/pkg/core/arrow_array"
-	"tiny_planner/pkg/core/common"
-	"tiny_planner/pkg/core/execution/context"
-	"tiny_planner/pkg/execution"
-	"tiny_planner/pkg/phyiscial_plan"
+	"tiny_planner/pkg/a_datafusion/common"
+	"tiny_planner/pkg/a_datafusion/core/execution/context"
+	"tiny_planner/pkg/a_datafusion/exprLogi"
+	"tiny_planner/pkg/a_datafusion/exprPhy/physicalplan"
 )
 
-type DataFrame struct {
-	sessionState context.SessionState
-	plan         logicalplan.LogicalPlan
+type IDataFrame interface {
+	Project(expr []exprLogi.LogicalExpr) IDataFrame
+	Filter(expr exprLogi.LogicalExpr) IDataFrame
+	Aggregate(groupBy []exprLogi.LogicalExpr, aggregateExpr []exprLogi.AggregateExpr) IDataFrame
+
+	Schema() common.DFSchema
+	Collect() []common.Batch
+	Show()
+
+	LogicalPlan() exprLogi.LogicalPlan
+	PhysicalPlan() physicalplan.ExecutionPlan
 }
 
-func NewDataFrame(sessionState context.SessionState, plan logicalplan.LogicalPlan) *DataFrame {
+type DataFrame struct {
+	sessionState SessionState
+	plan         exprLogi.LogicalPlan
+}
+
+func NewDataFrame(sessionState SessionState, plan exprLogi.LogicalPlan) *DataFrame {
 	return &DataFrame{sessionState: sessionState, plan: plan}
 }
 
-func (df *DataFrame) Project(expr []expr2.Expr) IDataFrame {
-	newPlan := logicalplan.From(df.plan).Project(expr).Build()
+func (df *DataFrame) Project(proj []exprLogi.LogicalExpr) IDataFrame {
+	newPlan := exprLogi.From(df.plan).Project(proj).Build()
 	return &DataFrame{plan: newPlan}
 }
 
-func (df *DataFrame) Filter(predicate expr2.Expr) IDataFrame {
-	newPlan := logicalplan.From(df.plan).Filter(predicate).Build()
+func (df *DataFrame) Filter(predicate exprLogi.LogicalExpr) IDataFrame {
+	newPlan := exprLogi.From(df.plan).Filter(predicate).Build()
 	return &DataFrame{plan: newPlan}
 }
 
-func (df *DataFrame) Aggregate(groupBy []expr2.Expr, aggExpr []expr2.AggregateExpr) IDataFrame {
-	newPlan := logicalplan.From(df.plan).Aggregate(groupBy, aggExpr).Build()
+func (df *DataFrame) Aggregate(groupBy []exprLogi.LogicalExpr, aggExpr []exprLogi.AggregateExpr) IDataFrame {
+	newPlan := exprLogi.From(df.plan).Aggregate(groupBy, aggExpr).Build()
 	return &DataFrame{plan: newPlan}
 }
 
-func (df *DataFrame) Explain(verbose, analyze bool) IDataFrame {
-	newPlan := logicalplan.From(df.plan).Explain(verbose, analyze).Build()
-	return &DataFrame{plan: newPlan}
-}
-
-func (df *DataFrame) TaskContext() execution.TaskContext {
+func (df *DataFrame) TaskContext() context.TaskContext {
 	return df.sessionState.TaskContext()
 }
 
@@ -48,15 +53,16 @@ func (df *DataFrame) Schema() common.DFSchema {
 	return df.plan.Schema()
 }
 
-func (df *DataFrame) LogicalPlan() logicalplan.LogicalPlan {
+func (df *DataFrame) LogicalPlan() exprLogi.LogicalPlan {
 	return df.plan
 }
 
-func (df *DataFrame) Collect() []arrow_array.RecordBatch {
-	taskCtx := df.TaskContext()
-	physicalPlan := df.PhysicalPlan()
-	res, _ := phyiscial_plan.Collect(taskCtx, physicalPlan)
-	return res
+func (df *DataFrame) Collect() []common.Batch {
+	//taskCtx := df.TaskContext()
+	//physicalPlan := df.PhysicalPlan()
+	//res, _ := physicalplan.Collect(taskCtx, physicalPlan)
+	//return res
+	return nil
 }
 
 func (df *DataFrame) Show() {
@@ -66,6 +72,6 @@ func (df *DataFrame) Show() {
 	}
 }
 
-func (df *DataFrame) PhysicalPlan() phyiscial_plan.ExecutionPlan {
+func (df *DataFrame) PhysicalPlan() physicalplan.ExecutionPlan {
 	return df.sessionState.CreatePhysicalPlan(df.plan)
 }
