@@ -1,11 +1,13 @@
 package dataframe
 
 import (
-	"fmt"
-	exprLogi "tiny_planner/pkg/f_logical_plan"
-	exprPhy "tiny_planner/pkg/g_physical_plan"
-	"tiny_planner/pkg/i_exec_runtime"
-	containers "tiny_planner/pkg/k_containers"
+	"github.com/olekukonko/tablewriter"
+	"os"
+	exprLogi "tiny_planner/pkg/e_logical_plan"
+	exec "tiny_planner/pkg/f_exec_engine"
+	"tiny_planner/pkg/f_exec_engine/a_operators"
+	"tiny_planner/pkg/g_exec_runtime"
+	containers "tiny_planner/pkg/i_containers"
 )
 
 type IDataFrame interface {
@@ -22,11 +24,11 @@ type IDataFrame interface {
 }
 
 type DataFrame struct {
-	sessionState SessionState
+	sessionState exec.ExecState
 	plan         exprLogi.LogicalPlan
 }
 
-func NewDataFrame(sessionState SessionState, plan exprLogi.LogicalPlan) *DataFrame {
+func NewDataFrame(sessionState exec.ExecState, plan exprLogi.LogicalPlan) *DataFrame {
 	return &DataFrame{sessionState: sessionState, plan: plan}
 }
 
@@ -65,9 +67,22 @@ func (df *DataFrame) Collect() []containers.Batch {
 
 func (df *DataFrame) Show() {
 	result := df.Collect()
-	for _, batch := range result {
-		fmt.Println(batch)
+	table := tablewriter.NewWriter(os.Stdout)
+
+	// 1. add headers
+	headers := make([]string, 0)
+	for _, field := range df.Schema().Fields() {
+		headers = append(headers, field.Name)
 	}
+	table.SetHeader(headers)
+
+	// 2. add data
+	for _, batch := range result {
+		table.AppendBulk(batch.StringTable())
+	}
+
+	// 3. render
+	table.Render()
 }
 
 func (df *DataFrame) PhysicalPlan() exprPhy.ExecutionPlan {

@@ -7,7 +7,7 @@ import (
 )
 
 type LogicalExpr interface {
-	ToField(input LogicalPlan) arrow.Field
+	ToColumnDefinition(input LogicalPlan) arrow.Field
 	String() string
 }
 
@@ -28,7 +28,7 @@ type Column struct {
 	Name string
 }
 
-func (col Column) ToField(input LogicalPlan) arrow.Field {
+func (col Column) ToColumnDefinition(input LogicalPlan) arrow.Field {
 	for _, f := range input.Schema().Fields() {
 		if f.Name == col.Name {
 			return f
@@ -48,72 +48,15 @@ type Alias struct {
 	Alias string
 }
 
-func (expr Alias) ToField(input LogicalPlan) arrow.Field {
+func (expr Alias) ToColumnDefinition(input LogicalPlan) arrow.Field {
 	return arrow.Field{
 		Name: expr.Alias,
-		Type: expr.Expr.ToField(input).Type,
+		Type: expr.Expr.ToColumnDefinition(input).Type,
 	}
 }
 
 func (expr Alias) String() string {
 	return fmt.Sprintf("%s as %s", expr.Expr.String(), expr.Alias)
-}
-
-// ---------- BooleanBinaryExpr ----------
-
-type BooleanBinaryExpr struct {
-	Name string
-	Op   string
-	L    LogicalExpr
-	R    LogicalExpr
-}
-
-func (be BooleanBinaryExpr) ToField(input LogicalPlan) arrow.Field {
-	return arrow.Field{
-		Name: be.Name,
-		Type: arrow.FixedWidthTypes.Boolean,
-	}
-}
-func (be BooleanBinaryExpr) String() string {
-	return be.L.String() + " " + be.Op + " " + be.R.String()
-}
-
-// ---------- MathExpr ----------
-
-type MathExpr struct {
-	Name string
-	Op   string
-	L    LogicalExpr
-	R    LogicalExpr
-}
-
-func (m MathExpr) String() string {
-	return fmt.Sprintf("%v %v %v", m.L, m.Op, m.R)
-}
-
-func (m MathExpr) ToField(input LogicalPlan) arrow.Field {
-	return arrow.Field{
-		Name: m.Name,
-		Type: arrow.PrimitiveTypes.Float64,
-	}
-}
-
-// ---------- Agg----------
-
-type AggregateExpr struct {
-	Name string
-	Expr LogicalExpr
-}
-
-func (e AggregateExpr) String() string {
-	return fmt.Sprintf("%s(%s)", e.Name, e.String())
-}
-
-func (e AggregateExpr) ToField(input LogicalPlan) arrow.Field {
-	return arrow.Field{
-		Name: e.Name,
-		Type: e.Expr.ToField(input).Type,
-	}
 }
 
 // ---------- Literals ----------
@@ -122,7 +65,7 @@ type LiteralString struct {
 	Val string
 }
 
-func (lit LiteralString) ToField(input LogicalPlan) arrow.Field {
+func (lit LiteralString) ToColumnDefinition(input LogicalPlan) arrow.Field {
 	return arrow.Field{
 		Name:     lit.Val,
 		Type:     arrow.BinaryTypes.String,
@@ -139,7 +82,7 @@ type LiteralInt64 struct {
 	Val int64
 }
 
-func (lit LiteralInt64) ToField(input LogicalPlan) arrow.Field {
+func (lit LiteralInt64) ToColumnDefinition(input LogicalPlan) arrow.Field {
 	return arrow.Field{
 		Name:     lit.String(),
 		Type:     arrow.PrimitiveTypes.Int64,
@@ -156,7 +99,7 @@ type LiteralFloat64 struct {
 	Val float64
 }
 
-func (lit LiteralFloat64) ToField(input LogicalPlan) arrow.Field {
+func (lit LiteralFloat64) ToColumnDefinition(input LogicalPlan) arrow.Field {
 	return arrow.Field{
 		Name:     lit.String(),
 		Type:     arrow.PrimitiveTypes.Float64,

@@ -1,13 +1,13 @@
-package dataframe
+package exec
 
 import (
 	"time"
-	exprLogi "tiny_planner/pkg/f_logical_plan"
-	exprPhy "tiny_planner/pkg/g_physical_plan"
-	execution "tiny_planner/pkg/i_exec_runtime"
+	exprLogi "tiny_planner/pkg/e_logical_plan"
+	"tiny_planner/pkg/f_exec_engine/a_operators"
+	"tiny_planner/pkg/g_exec_runtime"
 )
 
-type SessionState struct {
+type ExecState struct {
 	SessionID        string
 	SessionStartTime time.Time
 	QueryPlanner     QueryPlanner
@@ -25,7 +25,7 @@ type SessionState struct {
 
 }
 
-func (s SessionState) TaskContext() execution.TaskContext {
+func (s ExecState) TaskContext() execution.TaskContext {
 	return execution.TaskContext{
 		SessionID: s.SessionID,
 		TaskID:    time.Now().String(),
@@ -33,6 +33,6 @@ func (s SessionState) TaskContext() execution.TaskContext {
 	}
 }
 
-func (s SessionState) CreatePhysicalPlan(plan exprLogi.LogicalPlan) exprPhy.ExecutionPlan {
-	return s.QueryPlanner.CreatePhysicalPlan(plan, s)
+func (s ExecState) CreatePhysicalPlan(plan exprLogi.LogicalPlan) exprPhy.ExecutionPlan {
+	return s.QueryPlanner.CreatePhyPlan(plan, s)
 }

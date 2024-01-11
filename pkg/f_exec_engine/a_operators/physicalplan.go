@@ -3,9 +3,10 @@ package exprPhy
 import (
 	"fmt"
 	"strings"
-	execution "tiny_planner/pkg/i_exec_runtime"
-	datasource "tiny_planner/pkg/j_storage_engine"
-	containers "tiny_planner/pkg/k_containers"
+	exprExec "tiny_planner/pkg/f_exec_engine/b_expr_eval"
+	execution "tiny_planner/pkg/g_exec_runtime"
+	datasource "tiny_planner/pkg/h_storage_engine"
+	containers "tiny_planner/pkg/i_containers"
 )
 
 type ExecutionPlan interface {
@@ -49,7 +50,7 @@ func (s ScanExec) String() string {
 type ProjectionExec struct {
 	Input ExecutionPlan
 	Sch   containers.Schema
-	Proj  []Expression
+	Proj  []exprExec.Expression
 }
 
 func (p ProjectionExec) String() string {
@@ -69,7 +70,7 @@ func (p ProjectionExec) Execute(ctx execution.TaskContext) []containers.Batch {
 		for j, expr := range p.Proj {
 			vectors[j] = expr.Evaluate(batch)
 		}
-		output[i] = containers.Batch{Schema: p.Sch, Fields: vectors}
+		output[i] = containers.Batch{Schema: p.Sch, Vectors: vectors}
 	}
 	return output
 }
@@ -82,7 +83,7 @@ func (p ProjectionExec) Children() []ExecutionPlan {
 
 type SelectionExec struct {
 	Input  ExecutionPlan
-	Filter Expression
+	Filter exprExec.Expression
 }
 
 func (s SelectionExec) Schema() containers.Schema {
@@ -97,24 +98,8 @@ func (s SelectionExec) Execute(ctx execution.TaskContext) []containers.Batch {
 	input := s.Input.Execute(ctx)
 	output := make([]containers.Batch, len(input))
 	for i, batch := range input {
-		result := s.Filter.Evaluate(batch)
-		schema := batch.Schema
-		columnCount := len(schema.Fields())
-		filtered := make([]containers.IVector, len(batch.Fields))
-		for j := 0; j < columnCount; j++ {
-			filtered[j] = filter(batch.Fields[j], result)
-		}
-		output[i] = containers.Batch{Schema: batch.Schema, Fields: filtered}
+		sel := s.Filter.Evaluate(batch)
+		output[i] = *batch.Shrink(sel)
 	}
 	return output
-}
-
-func filter(vector containers.IVector, selection containers.IVector) containers.IVector {
-	var filteredVector []any
-	for i := 0; i < selection.Len(); i++ {
-		if selection.GetValue(i).(bool) {
-			filteredVector = append(filteredVector, vector.GetValue(i))
-		}
-	}
-	return containers.NewVector(vector.DataType(), len(filteredVector), filteredVector)
 }

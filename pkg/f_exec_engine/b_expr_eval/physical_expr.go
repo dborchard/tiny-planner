@@ -1,10 +1,10 @@
-package exprPhy
+package exprExec
 
 import (
 	"fmt"
 	"github.com/apache/arrow/go/v12/arrow"
 	"strconv"
-	containers "tiny_planner/pkg/k_containers"
+	containers "tiny_planner/pkg/i_containers"
 )
 
 type Expression interface {
@@ -24,57 +24,57 @@ var _ Expression = BinaryExpression{}
 // ----------- ColumnExpression -------------
 
 type ColumnExpression struct {
-	i int
+	I int
 }
 
 func (col ColumnExpression) Evaluate(input containers.Batch) containers.IVector {
-	return input.Column(col.i)
+	return input.Column(col.I)
 }
 
 func (col ColumnExpression) String() string {
-	return "#" + strconv.Itoa(col.i)
+	return "#" + strconv.Itoa(col.I)
 }
 
 // ----------- LiteralInt64Expression -------------
 
 type LiteralInt64Expression struct {
-	value int64
+	Value int64
 }
 
 func (lit LiteralInt64Expression) String() string {
-	return strconv.FormatInt(lit.value, 10)
+	return strconv.FormatInt(lit.Value, 10)
 }
 
 func (lit LiteralInt64Expression) Evaluate(input containers.Batch) containers.IVector {
-	return containers.ConstVector{ArrowType: arrow.PrimitiveTypes.Int64, Value: lit.value, Size: input.RowCount()}
+	return containers.ConstVector{ArrowType: arrow.PrimitiveTypes.Int64, Value: lit.Value, Size: input.RowCount()}
 }
 
 // ----------- LiteralFloat64Expression -------------
 
 type LiteralFloat64Expression struct {
-	value float64
+	Value float64
 }
 
 func (lit LiteralFloat64Expression) String() string {
-	return strconv.FormatFloat(lit.value, 'f', -1, 64)
+	return strconv.FormatFloat(lit.Value, 'f', -1, 64)
 }
 
 func (lit LiteralFloat64Expression) Evaluate(input containers.Batch) containers.IVector {
-	return containers.ConstVector{ArrowType: arrow.PrimitiveTypes.Float64, Value: lit.value, Size: input.RowCount()}
+	return containers.ConstVector{ArrowType: arrow.PrimitiveTypes.Float64, Value: lit.Value, Size: input.RowCount()}
 }
 
 // ----------- LiteralStringExpression -------------
 
 type LiteralStringExpression struct {
-	value string
+	Value string
 }
 
 func (lit LiteralStringExpression) Evaluate(input containers.Batch) containers.IVector {
-	return containers.ConstVector{ArrowType: arrow.BinaryTypes.String, Value: lit.value, Size: input.RowCount()}
+	return containers.ConstVector{ArrowType: arrow.BinaryTypes.String, Value: lit.Value, Size: input.RowCount()}
 }
 
 func (lit LiteralStringExpression) String() string {
-	return fmt.Sprintf("'%s'", lit.value)
+	return fmt.Sprintf("'%s'", lit.Value)
 }
 
 // ----------- BinaryExpression -------------

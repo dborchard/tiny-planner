@@ -6,8 +6,8 @@ import (
 	"io"
 	"log"
 	"os"
-	execution "tiny_planner/pkg/i_exec_runtime"
-	containers "tiny_planner/pkg/k_containers"
+	execution "tiny_planner/pkg/g_exec_runtime"
+	containers "tiny_planner/pkg/i_containers"
 )
 
 type CsvDataSource struct {
@@ -15,6 +15,35 @@ type CsvDataSource struct {
 	Sch        containers.Schema
 	HasHeaders bool
 	BatchSize  int
+}
+
+func (ds *CsvDataSource) LoadAndCacheSchema() containers.Schema {
+	// 1. Open File
+	file, err := os.Open(ds.Filename)
+	if err != nil {
+		panic(err)
+	}
+	defer func(file *os.File) {
+		err = file.Close()
+	}(file)
+
+	// 2. Read CSV
+	reader := csv.NewReader(file)
+	header, err := reader.Read()
+	if err != nil {
+		panic(err)
+	}
+
+	// 3. Create Arrow Schema
+	fields := make([]arrow.Field, len(header))
+	for i, name := range header {
+		fields[i] = arrow.Field{Name: name, Type: arrow.BinaryTypes.String}
+	}
+
+	schema := containers.Schema{Schema: arrow.NewSchema(fields, nil)}
+	ds.Sch = schema
+
+	return schema
 }
 
 func (ds *CsvDataSource) Schema() containers.Schema {

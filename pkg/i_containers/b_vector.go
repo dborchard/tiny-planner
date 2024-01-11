@@ -12,6 +12,7 @@ type IVector interface {
 	GetValue(i int) any
 	Len() int
 	String() string
+	Shrink(sel IVector) IVector
 }
 
 var _ IVector = ConstVector{}
@@ -34,23 +35,34 @@ type ConstVector struct {
 	Size      int
 }
 
-func (v ConstVector) String() string {
-	return fmt.Sprintf("ConstVector{ArrowType: %s, Value: %v, Size: %d}", v.ArrowType, v.Value, v.Size)
+func (c ConstVector) String() string {
+	return fmt.Sprintf("ConstVector{ArrowType: %s, Value: %v, Size: %d}", c.ArrowType, c.Value, c.Size)
 }
 
-func (v ConstVector) DataType() arrow.DataType {
-	return v.ArrowType
+func (c ConstVector) DataType() arrow.DataType {
+	return c.ArrowType
 }
 
-func (v ConstVector) GetValue(i int) any {
-	if i < 0 || i >= v.Size {
-		panic(fmt.Sprintf("index out of bounds %d vecsize: %d", i, v.Size))
+func (c ConstVector) GetValue(i int) any {
+	if i < 0 || i >= c.Size {
+		panic(fmt.Sprintf("index out of bounds %d vecsize: %d", i, c.Size))
 	}
-	return v.Value
+	return c.Value
 }
 
-func (v ConstVector) Len() int {
-	return v.Size
+func (c ConstVector) Len() int {
+	return c.Size
+}
+
+func (c ConstVector) Shrink(sel IVector) IVector {
+	//TODO: move to abstract class
+	var filteredCol []any
+	for i := 0; i < sel.Len(); i++ {
+		if sel.GetValue(i).(bool) {
+			filteredCol = append(filteredCol, c.GetValue(i))
+		}
+	}
+	return NewVector(c.DataType(), len(filteredCol), filteredCol)
 }
 
 // -----------------Vector------------------
@@ -78,77 +90,87 @@ type Vector struct {
 	stringData  *array.String
 }
 
-func (arr Vector) String() string {
-	switch arr.dtype.(type) {
+func (v Vector) String() string {
+	switch v.dtype.(type) {
 	case *arrow.BooleanType:
-		return arr.boolData.String()
+		return v.boolData.String()
 	case *arrow.Int8Type:
-		return arr.int8Data.String()
+		return v.int8Data.String()
 	case *arrow.Int16Type:
-		return arr.int16Data.String()
+		return v.int16Data.String()
 	case *arrow.Int32Type:
-		return arr.int32Data.String()
+		return v.int32Data.String()
 	case *arrow.Int64Type:
-		return arr.int64Data.String()
+		return v.int64Data.String()
 	case *arrow.Float32Type:
-		return arr.float32Data.String()
+		return v.float32Data.String()
 	case *arrow.Float64Type:
-		return arr.float64Data.String()
+		return v.float64Data.String()
 	case *arrow.StringType:
-		return arr.stringData.String()
+		return v.stringData.String()
 	default:
 		panic("Unsupported Arrow type")
 	}
 }
 
-func (arr Vector) Len() int {
-	switch arr.dtype.(type) {
+func (v Vector) Len() int {
+	switch v.dtype.(type) {
 	case *arrow.BooleanType:
-		return arr.boolData.Len()
+		return v.boolData.Len()
 	case *arrow.Int8Type:
-		return arr.int8Data.Len()
+		return v.int8Data.Len()
 	case *arrow.Int16Type:
-		return arr.int16Data.Len()
+		return v.int16Data.Len()
 	case *arrow.Int32Type:
-		return arr.int32Data.Len()
+		return v.int32Data.Len()
 	case *arrow.Int64Type:
-		return arr.int64Data.Len()
+		return v.int64Data.Len()
 	case *arrow.Float32Type:
-		return arr.float32Data.Len()
+		return v.float32Data.Len()
 	case *arrow.Float64Type:
-		return arr.float64Data.Len()
+		return v.float64Data.Len()
 	case *arrow.StringType:
-		return arr.stringData.Len()
+		return v.stringData.Len()
 	default:
 		panic("Unsupported Arrow type")
 	}
 }
 
-func (arr Vector) GetValue(i int) any {
-	switch arr.dtype.(type) {
+func (v Vector) GetValue(i int) any {
+	switch v.dtype.(type) {
 	case *arrow.BooleanType:
-		return arr.boolData.Value(i)
+		return v.boolData.Value(i)
 	case *arrow.Int8Type:
-		return arr.int8Data.Value(i)
+		return v.int8Data.Value(i)
 	case *arrow.Int16Type:
-		return arr.int16Data.Value(i)
+		return v.int16Data.Value(i)
 	case *arrow.Int32Type:
-		return arr.int32Data.Value(i)
+		return v.int32Data.Value(i)
 	case *arrow.Int64Type:
-		return arr.int64Data.Value(i)
+		return v.int64Data.Value(i)
 	case *arrow.Float32Type:
-		return arr.float32Data.Value(i)
+		return v.float32Data.Value(i)
 	case *arrow.Float64Type:
-		return arr.float64Data.Value(i)
+		return v.float64Data.Value(i)
 	case *arrow.StringType:
-		return arr.stringData.Value(i)
+		return v.stringData.Value(i)
 	default:
 		panic("Unsupported Arrow type")
 	}
 }
 
-func (arr Vector) DataType() arrow.DataType {
-	return arr.dtype
+func (v Vector) DataType() arrow.DataType {
+	return v.dtype
+}
+
+func (v Vector) Shrink(sel IVector) IVector {
+	var filteredCol []any
+	for i := 0; i < sel.Len(); i++ {
+		if sel.GetValue(i).(bool) {
+			filteredCol = append(filteredCol, v.GetValue(i))
+		}
+	}
+	return NewVector(v.DataType(), len(filteredCol), filteredCol)
 }
 
 func NewVector(arrowType arrow.DataType, initialCapacity int, data []any) Vector {

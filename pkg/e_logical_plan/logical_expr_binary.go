@@ -1,28 +1,11 @@
 package exprLogi
 
-// ------------- Agg -------------
+import (
+	"fmt"
+	"github.com/apache/arrow/go/v12/arrow"
+)
 
-func Sum(input LogicalExpr) AggregateExpr {
-	return AggregateExpr{"SUM", input}
-}
-
-func Min(input LogicalExpr) AggregateExpr {
-	return AggregateExpr{"MIN", input}
-}
-
-func Max(input LogicalExpr) AggregateExpr {
-	return AggregateExpr{"MAX", input}
-}
-
-func Avg(input LogicalExpr) AggregateExpr {
-	return AggregateExpr{"AVG", input}
-}
-
-func Count(input LogicalExpr) AggregateExpr {
-	return AggregateExpr{"COUNT", input}
-}
-
-// ------------- BinaryExpr -------------
+// ---------- Comparison ----------
 
 func Eq(l LogicalExpr, r LogicalExpr) BooleanBinaryExpr {
 	return BooleanBinaryExpr{"eq", "=", l, r}
@@ -42,6 +25,26 @@ func Lt(l LogicalExpr, r LogicalExpr) BooleanBinaryExpr {
 func LtEq(l LogicalExpr, r LogicalExpr) BooleanBinaryExpr {
 	return BooleanBinaryExpr{"lteq", "<=", l, r}
 }
+
+// ---------- BooleanBinaryExpr ----------
+
+type BooleanBinaryExpr struct {
+	Name string
+	Op   string
+	L    LogicalExpr
+	R    LogicalExpr
+}
+
+func (be BooleanBinaryExpr) ToColumnDefinition(input LogicalPlan) arrow.Field {
+	return arrow.Field{
+		Name: be.Name,
+		Type: arrow.FixedWidthTypes.Boolean,
+	}
+}
+func (be BooleanBinaryExpr) String() string {
+	return be.L.String() + " " + be.Op + " " + be.R.String()
+}
+
 func And(l LogicalExpr, r LogicalExpr) BooleanBinaryExpr {
 	return BooleanBinaryExpr{"and", "AND", l, r}
 }
@@ -49,7 +52,25 @@ func Or(l LogicalExpr, r LogicalExpr) BooleanBinaryExpr {
 	return BooleanBinaryExpr{"or", "OR", l, r}
 }
 
-// ------------- MathExpr -------------
+// ---------- MathExpr ----------
+
+type MathExpr struct {
+	Name string
+	Op   string
+	L    LogicalExpr
+	R    LogicalExpr
+}
+
+func (m MathExpr) ToColumnDefinition(input LogicalPlan) arrow.Field {
+	return arrow.Field{
+		Name: m.Name,
+		Type: arrow.PrimitiveTypes.Float64,
+	}
+}
+
+func (m MathExpr) String() string {
+	return fmt.Sprintf("%v %v %v", m.L, m.Op, m.R)
+}
 
 func Add(l LogicalExpr, r LogicalExpr) MathExpr {
 	return MathExpr{"add", "+", l, r}

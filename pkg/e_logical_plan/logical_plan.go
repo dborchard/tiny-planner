@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/apache/arrow/go/v12/arrow"
 	"strings"
-	datasource "tiny_planner/pkg/j_storage_engine"
-	containers "tiny_planner/pkg/k_containers"
+	datasource "tiny_planner/pkg/h_storage_engine"
+	containers "tiny_planner/pkg/i_containers"
 )
 
 type LogicalPlan interface {
@@ -57,7 +57,7 @@ type Projection struct {
 func (p Projection) Schema() containers.Schema {
 	var fields []arrow.Field
 	for _, e := range p.Expr {
-		fields = append(fields, e.ToField(p.Input))
+		fields = append(fields, e.ToColumnDefinition(p.Input))
 	}
 	return containers.Schema{Schema: arrow.NewSchema(fields, nil)}
 }
@@ -105,10 +105,10 @@ type Aggregate struct {
 func (a Aggregate) Schema() containers.Schema {
 	var fields []arrow.Field
 	for _, e := range a.GroupExpr {
-		fields = append(fields, e.ToField(a.Input))
+		fields = append(fields, e.ToColumnDefinition(a.Input))
 	}
 	for _, e := range a.AggregateExpr {
-		fields = append(fields, e.ToField(a.Input))
+		fields = append(fields, e.ToColumnDefinition(a.Input))
 	}
 	return containers.Schema{Schema: arrow.NewSchema(fields, nil)}
 }
