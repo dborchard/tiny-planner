@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
-	datasource "tiny_planner/pkg/i_datasource"
+	datasource "tiny_planner/pkg/i_storage_engine"
 )
 
 func TestLogicalPlan_LogicalPlan(t *testing.T) {

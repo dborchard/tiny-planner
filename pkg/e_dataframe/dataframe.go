@@ -2,8 +2,8 @@ package dataframe
 
 import (
 	"fmt"
-	exprLogi "tiny_planner/pkg/f_expr_logical"
-	exprPhy "tiny_planner/pkg/g_expr_physcial"
+	exprLogi "tiny_planner/pkg/f_logical_plan"
+	exprPhy "tiny_planner/pkg/g_physical_plan"
 	"tiny_planner/pkg/h_exec_runtime"
 	containers "tiny_planner/pkg/j_containers"
 )

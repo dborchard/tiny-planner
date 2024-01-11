@@ -1,7 +1,7 @@
 package exprPhy
 
 import (
-	exprLogi "tiny_planner/pkg/f_expr_logical"
+	exprLogi "tiny_planner/pkg/f_logical_plan"
 	containers "tiny_planner/pkg/j_containers"
 )
 
