@@ -4,7 +4,7 @@ import (
 	"tiny_planner/pkg/a_datafusion/common"
 	"tiny_planner/pkg/a_datafusion/core/datasource"
 	"tiny_planner/pkg/a_datafusion/exprLogi"
-	"tiny_planner/pkg/a_datafusion/exprPhy/physicalplan"
+	"tiny_planner/pkg/a_datafusion/exprPhy"
 )
 
 type SessionContext struct {
@@ -35,7 +35,7 @@ func (c *SessionContext) ReadCsv(path string, options datasource.CsvReadOptions)
 
 	src := datasource.CsvDataSource{
 		Filename:   path,
-		DFSchema:   common.DFSchema{Schema: schema},
+		Sch:        common.Schema{Schema: schema},
 		HasHeaders: options.HasHeader,
 		BatchSize:  1024,
 	}
@@ -52,5 +52,5 @@ func (c *SessionContext) Sql(sql string) IDataFrame {
 }
 
 type QueryPlanner interface {
-	CreatePhysicalPlan(lp exprLogi.LogicalPlan, state SessionState) physicalplan.ExecutionPlan
+	CreatePhysicalPlan(lp exprLogi.LogicalPlan, state SessionState) exprPhy.PhysicalPlan
 }

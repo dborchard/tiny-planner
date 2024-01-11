@@ -1,8 +1,8 @@
 ## Tiny Query Engine
 
-Porting `DataFusion` from `Rust` to `Golang`
+Porting `DataFusion` from `Rust` to `Golang` by referring to [drogo](https://github.com/briansterle/drogo).
 
 ### Modules
 
-- [x] Datafusion/Core/DataFrame
-- [ ] Datafusion/Expr/LogicalPlan
+- [X] Datafusion/Core/DataFrame
+- [X] Datafusion/Expr/LogicalPlan

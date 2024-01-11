@@ -5,7 +5,7 @@ import (
 	"tiny_planner/pkg/a_datafusion/common"
 	"tiny_planner/pkg/a_datafusion/core/execution/context"
 	"tiny_planner/pkg/a_datafusion/exprLogi"
-	"tiny_planner/pkg/a_datafusion/exprPhy/physicalplan"
+	"tiny_planner/pkg/a_datafusion/exprPhy"
 )
 
 type IDataFrame interface {
@@ -13,12 +13,12 @@ type IDataFrame interface {
 	Filter(expr exprLogi.LogicalExpr) IDataFrame
 	Aggregate(groupBy []exprLogi.LogicalExpr, aggregateExpr []exprLogi.AggregateExpr) IDataFrame
 
-	Schema() common.DFSchema
+	Schema() common.Schema
 	Collect() []common.Batch
 	Show()
 
 	LogicalPlan() exprLogi.LogicalPlan
-	PhysicalPlan() physicalplan.ExecutionPlan
+	PhysicalPlan() exprPhy.PhysicalPlan
 }
 
 type DataFrame struct {
@@ -49,7 +49,7 @@ func (df *DataFrame) TaskContext() context.TaskContext {
 	return df.sessionState.TaskContext()
 }
 
-func (df *DataFrame) Schema() common.DFSchema {
+func (df *DataFrame) Schema() common.Schema {
 	return df.plan.Schema()
 }
 
@@ -72,6 +72,6 @@ func (df *DataFrame) Show() {
 	}
 }
 
-func (df *DataFrame) PhysicalPlan() physicalplan.ExecutionPlan {
+func (df *DataFrame) PhysicalPlan() exprPhy.PhysicalPlan {
 	return df.sessionState.CreatePhysicalPlan(df.plan)
 }

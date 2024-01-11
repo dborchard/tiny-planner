@@ -9,7 +9,7 @@ import (
 )
 
 type LogicalPlan interface {
-	Schema() common.DFSchema
+	Schema() common.Schema
 	Children() []LogicalPlan
 	String() string
 }
@@ -27,7 +27,7 @@ type Scan struct {
 	Projection []string
 }
 
-func (s Scan) Schema() common.DFSchema {
+func (s Scan) Schema() common.Schema {
 	schema := s.Source.Schema()
 	if len(s.Projection) == 0 {
 		return schema
@@ -54,12 +54,12 @@ type Projection struct {
 	Expr  []LogicalExpr
 }
 
-func (p Projection) Schema() common.DFSchema {
+func (p Projection) Schema() common.Schema {
 	var fields []arrow.Field
 	for _, e := range p.Expr {
 		fields = append(fields, e.ToField(p.Input))
 	}
-	return common.DFSchema{Schema: arrow.NewSchema(fields, nil)}
+	return common.Schema{Schema: arrow.NewSchema(fields, nil)}
 }
 
 func (p Projection) Children() []LogicalPlan {
@@ -82,7 +82,7 @@ type Selection struct {
 	Expr  LogicalExpr
 }
 
-func (s Selection) Schema() common.DFSchema {
+func (s Selection) Schema() common.Schema {
 	return s.Input.Schema()
 }
 
@@ -102,7 +102,7 @@ type Aggregate struct {
 	AggregateExpr []AggregateExpr
 }
 
-func (a Aggregate) Schema() common.DFSchema {
+func (a Aggregate) Schema() common.Schema {
 	var fields []arrow.Field
 	for _, e := range a.GroupExpr {
 		fields = append(fields, e.ToField(a.Input))
@@ -110,7 +110,7 @@ func (a Aggregate) Schema() common.DFSchema {
 	for _, e := range a.AggregateExpr {
 		fields = append(fields, e.ToField(a.Input))
 	}
-	return common.DFSchema{Schema: arrow.NewSchema(fields, nil)}
+	return common.Schema{Schema: arrow.NewSchema(fields, nil)}
 }
 
 func (a Aggregate) Children() []LogicalPlan {

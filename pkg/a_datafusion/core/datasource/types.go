@@ -3,7 +3,7 @@ package datasource
 import "tiny_planner/pkg/a_datafusion/common"
 
 type DataSource interface {
-	Schema() common.DFSchema
+	Schema() common.Schema
 	Scan(projection []string) []common.Batch
 }
 

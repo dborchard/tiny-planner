@@ -2,11 +2,11 @@ package common
 
 import "github.com/apache/arrow/go/v12/arrow"
 
-type DFSchema struct {
+type Schema struct {
 	*arrow.Schema
 }
 
-func (s DFSchema) Select(projection []string) DFSchema {
+func (s Schema) Select(projection []string) Schema {
 	fields := make([]arrow.Field, 0)
 	for _, columnName := range projection {
 		field, ok := s.FieldsByName(columnName)
@@ -15,5 +15,5 @@ func (s DFSchema) Select(projection []string) DFSchema {
 		}
 	}
 	newSchema := arrow.NewSchema(fields, nil)
-	return DFSchema{newSchema}
+	return Schema{newSchema}
 }
