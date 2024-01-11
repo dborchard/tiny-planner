@@ -7,18 +7,20 @@ import (
 	"github.com/apache/arrow/go/v12/arrow/memory"
 )
 
-type Vector interface {
+type IVector interface {
 	DataType() arrow.DataType
 	GetValue(i int) any
 	Len() int
+	String() string
 }
 
-var _ Vector = LiteralValueVector{}
+var _ IVector = ConstVector{}
+var _ IVector = Vector{}
 
-// -----------------LiteralValueVector------------------
+// -----------------ConstVector------------------
 
-func NewLiteralValueVector(arrowType arrow.DataType, value any, size int) LiteralValueVector {
-	return LiteralValueVector{
+func NewConstVector(arrowType arrow.DataType, value any, size int) ConstVector {
+	return ConstVector{
 		ArrowType: arrowType,
 		Value:     value,
 		Size:      size,
@@ -26,28 +28,32 @@ func NewLiteralValueVector(arrowType arrow.DataType, value any, size int) Litera
 
 }
 
-type LiteralValueVector struct {
+type ConstVector struct {
 	ArrowType arrow.DataType
 	Value     any
 	Size      int
 }
 
-func (v LiteralValueVector) DataType() arrow.DataType {
+func (v ConstVector) String() string {
+	return fmt.Sprintf("ConstVector{ArrowType: %s, Value: %v, Size: %d}", v.ArrowType, v.Value, v.Size)
+}
+
+func (v ConstVector) DataType() arrow.DataType {
 	return v.ArrowType
 }
 
-func (v LiteralValueVector) GetValue(i int) any {
+func (v ConstVector) GetValue(i int) any {
 	if i < 0 || i >= v.Size {
 		panic(fmt.Sprintf("index out of bounds %d vecsize: %d", i, v.Size))
 	}
 	return v.Value
 }
 
-func (v LiteralValueVector) Len() int {
+func (v ConstVector) Len() int {
 	return v.Size
 }
 
-// -----------------ArrayVector------------------
+// -----------------Vector------------------
 
 var (
 	Int8    = &arrow.Int8Type{}
@@ -60,7 +66,7 @@ var (
 	Boolean = &arrow.BooleanType{}
 )
 
-type Array struct {
+type Vector struct {
 	dtype       arrow.DataType
 	boolData    *array.Boolean
 	int8Data    *array.Int8
@@ -72,7 +78,7 @@ type Array struct {
 	stringData  *array.String
 }
 
-func (arr Array) String() string {
+func (arr Vector) String() string {
 	switch arr.dtype.(type) {
 	case *arrow.BooleanType:
 		return arr.boolData.String()
@@ -95,7 +101,7 @@ func (arr Array) String() string {
 	}
 }
 
-func (arr Array) Len() int {
+func (arr Vector) Len() int {
 	switch arr.dtype.(type) {
 	case *arrow.BooleanType:
 		return arr.boolData.Len()
@@ -118,7 +124,7 @@ func (arr Array) Len() int {
 	}
 }
 
-func (arr Array) GetValue(i int) any {
+func (arr Vector) GetValue(i int) any {
 	switch arr.dtype.(type) {
 	case *arrow.BooleanType:
 		return arr.boolData.Value(i)
@@ -141,13 +147,13 @@ func (arr Array) GetValue(i int) any {
 	}
 }
 
-func (arr Array) DataType() arrow.DataType {
+func (arr Vector) DataType() arrow.DataType {
 	return arr.dtype
 }
 
-func NewArray(arrowType arrow.DataType, initialCapacity int, data []any) Array {
+func NewVector(arrowType arrow.DataType, initialCapacity int, data []any) Vector {
 	rootAllocator := memory.NewGoAllocator()
-	out := Array{dtype: arrowType}
+	out := Vector{dtype: arrowType}
 	switch arrowType.(type) {
 	case *arrow.BooleanType:
 		vs := array.NewBooleanBuilder(rootAllocator)

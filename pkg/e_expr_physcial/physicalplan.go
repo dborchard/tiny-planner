@@ -4,18 +4,19 @@ import (
 	"fmt"
 	"strings"
 	containers "tiny_planner/pkg/a_containers"
-	datasource "tiny_planner/pkg/c_datasource"
+	datasource "tiny_planner/pkg/b_datasource"
+	execution "tiny_planner/pkg/d_exec_runtime"
 )
 
-type PhysicalPlan interface {
+type ExecutionPlan interface {
 	Schema() containers.Schema
-	Children() []PhysicalPlan
-	Execute() []containers.Batch
+	Children() []ExecutionPlan
+	Execute(ctx execution.TaskContext) []containers.Batch
 }
 
-var _ PhysicalPlan = ScanExec{}
-var _ PhysicalPlan = ProjectionExec{}
-var _ PhysicalPlan = SelectionExec{}
+var _ ExecutionPlan = ScanExec{}
+var _ ExecutionPlan = ProjectionExec{}
+var _ ExecutionPlan = SelectionExec{}
 
 //----------------- ScanExec -----------------
 
@@ -31,12 +32,12 @@ func (s ScanExec) Schema() containers.Schema {
 	return s.Source.Schema().Select(s.Projection)
 }
 
-func (s ScanExec) Execute() []containers.Batch {
-	return s.Source.Scan(s.Projection)
+func (s ScanExec) Execute(ctx execution.TaskContext) []containers.Batch {
+	return s.Source.Scan(s.Projection, ctx)
 }
 
-func (s ScanExec) Children() []PhysicalPlan {
-	return []PhysicalPlan{}
+func (s ScanExec) Children() []ExecutionPlan {
+	return []ExecutionPlan{}
 }
 
 func (s ScanExec) String() string {
@@ -46,7 +47,7 @@ func (s ScanExec) String() string {
 //----------------- ProjectionExec -----------------
 
 type ProjectionExec struct {
-	Input PhysicalPlan
+	Input ExecutionPlan
 	Sch   containers.Schema
 	Proj  []Expression
 }
@@ -59,12 +60,12 @@ func (p ProjectionExec) Schema() containers.Schema {
 	return p.Sch
 }
 
-func (p ProjectionExec) Execute() []containers.Batch {
-	input := p.Input.Execute()
+func (p ProjectionExec) Execute(ctx execution.TaskContext) []containers.Batch {
+	input := p.Input.Execute(ctx)
 	output := make([]containers.Batch, len(input))
 
 	for i, batch := range input {
-		vectors := make([]containers.Vector, len(p.Proj))
+		vectors := make([]containers.IVector, len(p.Proj))
 		for j, expr := range p.Proj {
 			vectors[j] = expr.Evaluate(batch)
 		}
@@ -73,14 +74,14 @@ func (p ProjectionExec) Execute() []containers.Batch {
 	return output
 }
 
-func (p ProjectionExec) Children() []PhysicalPlan {
-	return []PhysicalPlan{p.Input}
+func (p ProjectionExec) Children() []ExecutionPlan {
+	return []ExecutionPlan{p.Input}
 }
 
 //----------------- SelectionExec -----------------
 
 type SelectionExec struct {
-	Input  PhysicalPlan
+	Input  ExecutionPlan
 	Filter Expression
 }
 
@@ -88,18 +89,18 @@ func (s SelectionExec) Schema() containers.Schema {
 	return s.Input.Schema()
 }
 
-func (s SelectionExec) Children() []PhysicalPlan {
-	return []PhysicalPlan{s.Input}
+func (s SelectionExec) Children() []ExecutionPlan {
+	return []ExecutionPlan{s.Input}
 }
 
-func (s SelectionExec) Execute() []containers.Batch {
-	input := s.Input.Execute()
+func (s SelectionExec) Execute(ctx execution.TaskContext) []containers.Batch {
+	input := s.Input.Execute(ctx)
 	output := make([]containers.Batch, len(input))
 	for i, batch := range input {
 		result := s.Filter.Evaluate(batch)
 		schema := batch.Schema
 		columnCount := len(schema.Fields())
-		filtered := make([]containers.Vector, len(batch.Fields))
+		filtered := make([]containers.IVector, len(batch.Fields))
 		for j := 0; j < columnCount; j++ {
 			filtered[j] = filter(batch.Fields[j], result)
 		}
@@ -108,12 +109,12 @@ func (s SelectionExec) Execute() []containers.Batch {
 	return output
 }
 
-func filter(vector containers.Vector, selection containers.Vector) containers.Vector {
+func filter(vector containers.IVector, selection containers.IVector) containers.IVector {
 	var filteredVector []any
 	for i := 0; i < selection.Len(); i++ {
 		if selection.GetValue(i).(bool) {
 			filteredVector = append(filteredVector, vector.GetValue(i))
 		}
 	}
-	return containers.NewArray(vector.DataType(), len(filteredVector), filteredVector)
+	return containers.NewVector(vector.DataType(), len(filteredVector), filteredVector)
 }

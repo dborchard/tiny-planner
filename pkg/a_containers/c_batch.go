@@ -1,9 +1,10 @@
 package containers
 
-// Batch represents a batch of columnar data.
+import "strings"
+
 type Batch struct {
 	Schema Schema
-	Fields []Vector
+	Fields []IVector
 }
 
 func (r *Batch) RowCount() int {
@@ -14,6 +15,18 @@ func (r *Batch) ColumnCount() int {
 	return len(r.Fields)
 }
 
-func (r *Batch) Field(i int) Vector {
+func (r *Batch) Column(i int) IVector {
 	return r.Fields[i]
+}
+
+func (r *Batch) String() string {
+	var sb strings.Builder
+	sb.WriteString(r.Schema.String())
+	sb.WriteRune('\n')
+
+	for _, field := range r.Fields {
+		sb.WriteString(field.String())
+		sb.WriteRune('\n')
+	}
+	return sb.String()
 }

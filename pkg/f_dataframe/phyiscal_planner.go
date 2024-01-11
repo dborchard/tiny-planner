@@ -1,18 +1,18 @@
 package dataframe
 
 import (
-	exprLogi "tiny_planner/pkg/d_exprLogi"
-	exprPhy "tiny_planner/pkg/e_exprPhy"
+	exprLogi "tiny_planner/pkg/c_expr_logical"
+	exprPhy "tiny_planner/pkg/e_expr_physcial"
 )
 
 type QueryPlanner interface {
-	CreatePhysicalPlan(lp exprLogi.LogicalPlan, state SessionState) exprPhy.PhysicalPlan
+	CreatePhysicalPlan(lp exprLogi.LogicalPlan, state SessionState) exprPhy.ExecutionPlan
 }
 
 type DefaultQueryPlanner struct {
 }
 
-func (d DefaultQueryPlanner) CreatePhysicalPlan(lp exprLogi.LogicalPlan, state SessionState) exprPhy.PhysicalPlan {
+func (d DefaultQueryPlanner) CreatePhysicalPlan(lp exprLogi.LogicalPlan, state SessionState) exprPhy.ExecutionPlan {
 	switch lp.(type) {
 	case exprLogi.Scan:
 		return d.createScan(lp.(exprLogi.Scan), state)
@@ -27,11 +27,11 @@ func (d DefaultQueryPlanner) CreatePhysicalPlan(lp exprLogi.LogicalPlan, state S
 	}
 }
 
-func (d DefaultQueryPlanner) createScan(scan exprLogi.Scan, state SessionState) exprPhy.PhysicalPlan {
+func (d DefaultQueryPlanner) createScan(scan exprLogi.Scan, state SessionState) exprPhy.ExecutionPlan {
 	return exprPhy.ScanExec{Source: scan.Source, Projection: scan.Projection}
 }
 
-func (d DefaultQueryPlanner) createProjection(projection exprLogi.Projection, state SessionState) exprPhy.PhysicalPlan {
+func (d DefaultQueryPlanner) createProjection(projection exprLogi.Projection, state SessionState) exprPhy.ExecutionPlan {
 	childPlan := d.CreatePhysicalPlan(projection.Input, state)
 	proj := make([]exprPhy.Expression, len(projection.Expr))
 	for i, e := range projection.Expr {
@@ -40,11 +40,11 @@ func (d DefaultQueryPlanner) createProjection(projection exprLogi.Projection, st
 	return exprPhy.ProjectionExec{Input: childPlan, Proj: proj, Sch: projection.Schema()}
 }
 
-func (d DefaultQueryPlanner) createSelection(selection exprLogi.Selection, state SessionState) exprPhy.PhysicalPlan {
+func (d DefaultQueryPlanner) createSelection(selection exprLogi.Selection, state SessionState) exprPhy.ExecutionPlan {
 	childPlan := d.CreatePhysicalPlan(selection.Input, state)
 	return exprPhy.SelectionExec{Input: childPlan, Filter: exprPhy.FromLogicalToPhysical(selection.Filter, childPlan.Schema())}
 }
 
-func (d DefaultQueryPlanner) createAggregate(aggregate exprLogi.Aggregate, state SessionState) exprPhy.PhysicalPlan {
+func (d DefaultQueryPlanner) createAggregate(aggregate exprLogi.Aggregate, state SessionState) exprPhy.ExecutionPlan {
 	panic("not implemented")
 }

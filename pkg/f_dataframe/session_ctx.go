@@ -2,8 +2,9 @@ package dataframe
 
 import (
 	containers "tiny_planner/pkg/a_containers"
-	datasource "tiny_planner/pkg/c_datasource"
-	exprLogi "tiny_planner/pkg/d_exprLogi"
+	datasource "tiny_planner/pkg/b_datasource"
+	exprLogi "tiny_planner/pkg/c_expr_logical"
+	execution "tiny_planner/pkg/d_exec_runtime"
 )
 
 type SessionContext struct {
@@ -15,6 +16,7 @@ func NewContext() *SessionContext {
 	return &SessionContext{
 		State: SessionState{
 			QueryPlanner: DefaultQueryPlanner{},
+			RuntimeEnv:   execution.NewRuntimeEnv(),
 		},
 	}
 }

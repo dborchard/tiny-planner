@@ -8,7 +8,7 @@ import (
 )
 
 type Expression interface {
-	Evaluate(input containers.Batch) containers.Vector
+	Evaluate(input containers.Batch) containers.IVector
 	String() string
 }
 
@@ -27,8 +27,8 @@ type ColumnExpression struct {
 	i int
 }
 
-func (col ColumnExpression) Evaluate(input containers.Batch) containers.Vector {
-	return input.Field(col.i)
+func (col ColumnExpression) Evaluate(input containers.Batch) containers.IVector {
+	return input.Column(col.i)
 }
 
 func (col ColumnExpression) String() string {
@@ -45,8 +45,8 @@ func (lit LiteralInt64Expression) String() string {
 	return strconv.FormatInt(lit.value, 10)
 }
 
-func (lit LiteralInt64Expression) Evaluate(input containers.Batch) containers.Vector {
-	return containers.LiteralValueVector{ArrowType: arrow.PrimitiveTypes.Int64, Value: lit.value, Size: input.RowCount()}
+func (lit LiteralInt64Expression) Evaluate(input containers.Batch) containers.IVector {
+	return containers.ConstVector{ArrowType: arrow.PrimitiveTypes.Int64, Value: lit.value, Size: input.RowCount()}
 }
 
 // ----------- LiteralFloat64Expression -------------
@@ -59,8 +59,8 @@ func (lit LiteralFloat64Expression) String() string {
 	return strconv.FormatFloat(lit.value, 'f', -1, 64)
 }
 
-func (lit LiteralFloat64Expression) Evaluate(input containers.Batch) containers.Vector {
-	return containers.LiteralValueVector{ArrowType: arrow.PrimitiveTypes.Float64, Value: lit.value, Size: input.RowCount()}
+func (lit LiteralFloat64Expression) Evaluate(input containers.Batch) containers.IVector {
+	return containers.ConstVector{ArrowType: arrow.PrimitiveTypes.Float64, Value: lit.value, Size: input.RowCount()}
 }
 
 // ----------- LiteralStringExpression -------------
@@ -69,8 +69,8 @@ type LiteralStringExpression struct {
 	value string
 }
 
-func (lit LiteralStringExpression) Evaluate(input containers.Batch) containers.Vector {
-	return containers.LiteralValueVector{ArrowType: arrow.BinaryTypes.String, Value: lit.value, Size: input.RowCount()}
+func (lit LiteralStringExpression) Evaluate(input containers.Batch) containers.IVector {
+	return containers.ConstVector{ArrowType: arrow.BinaryTypes.String, Value: lit.value, Size: input.RowCount()}
 }
 
 func (lit LiteralStringExpression) String() string {
@@ -86,11 +86,11 @@ type BinaryExpression struct {
 }
 
 type BinaryExpressionEvaluator interface {
-	Evaluate(input containers.Batch) containers.Vector
-	evaluate(l, r containers.Vector) containers.Vector
+	Evaluate(input containers.Batch) containers.IVector
+	evaluate(l, r containers.IVector) containers.IVector
 }
 
-func (e BinaryExpression) Evaluate(input containers.Batch) containers.Vector {
+func (e BinaryExpression) Evaluate(input containers.Batch) containers.IVector {
 	ll := e.l.Evaluate(input)
 	rr := e.r.Evaluate(input)
 	if ll.Len() != rr.Len() {
@@ -102,7 +102,7 @@ func (e BinaryExpression) Evaluate(input containers.Batch) containers.Vector {
 	return e.evaluate(ll, rr)
 }
 
-func (e BinaryExpression) evaluate(l, r containers.Vector) containers.Vector {
+func (e BinaryExpression) evaluate(l, r containers.IVector) containers.IVector {
 	return e.BinaryExpressionEvaluator.evaluate(l, r)
 }
 
@@ -123,14 +123,14 @@ type MathExpression struct {
 	r Expression
 }
 
-func (e MathExpression) Evaluate(l containers.Vector, r containers.Vector) containers.Vector {
+func (e MathExpression) Evaluate(l containers.IVector, r containers.IVector) containers.IVector {
 	values := make([]any, l.Len())
 	for i := 0; i < l.Len(); i++ {
 		value := e.evaluate(l.GetValue(i), r.GetValue(i), l.DataType())
 		values[i] = value
 	}
 
-	return containers.NewArray(l.DataType(), l.Len(), values)
+	return containers.NewVector(l.DataType(), l.Len(), values)
 }
 
 type AddExpression struct {

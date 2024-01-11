@@ -3,9 +3,9 @@ package dataframe
 import (
 	"fmt"
 	containers "tiny_planner/pkg/a_containers"
-	"tiny_planner/pkg/b_exec_runtime"
-	exprLogi "tiny_planner/pkg/d_exprLogi"
-	exprPhy "tiny_planner/pkg/e_exprPhy"
+	exprLogi "tiny_planner/pkg/c_expr_logical"
+	"tiny_planner/pkg/d_exec_runtime"
+	exprPhy "tiny_planner/pkg/e_expr_physcial"
 )
 
 type IDataFrame interface {
@@ -18,7 +18,7 @@ type IDataFrame interface {
 	Show()
 
 	LogicalPlan() exprLogi.LogicalPlan
-	PhysicalPlan() exprPhy.PhysicalPlan
+	PhysicalPlan() exprPhy.ExecutionPlan
 }
 
 type DataFrame struct {
@@ -58,12 +58,8 @@ func (df *DataFrame) LogicalPlan() exprLogi.LogicalPlan {
 }
 
 func (df *DataFrame) Collect() []containers.Batch {
-	taskCtx := df.TaskContext()
 	physicalPlan := df.PhysicalPlan()
-	res, err := exprPhy.Collect(taskCtx, physicalPlan)
-	if err != nil {
-		panic(err)
-	}
+	res := physicalPlan.Execute(df.TaskContext())
 	return res
 }
 
@@ -74,6 +70,6 @@ func (df *DataFrame) Show() {
 	}
 }
 
-func (df *DataFrame) PhysicalPlan() exprPhy.PhysicalPlan {
+func (df *DataFrame) PhysicalPlan() exprPhy.ExecutionPlan {
 	return df.sessionState.CreatePhysicalPlan(df.plan)
 }
