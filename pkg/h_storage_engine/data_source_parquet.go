@@ -71,7 +71,10 @@ func (ds *ParquetDataSource) Iterator(projection []string, tCtx execution.TaskCo
 				select {
 				case <-ctx.Done():
 					return ctx.Err()
-				case rg := <-rowGroups:
+				case rg, ok := <-rowGroups:
+					if !ok {
+						return nil
+					}
 					var vectors []containers.IVector
 					schema := rg.Schema()
 					for c, colDef := range schema.Fields() {
