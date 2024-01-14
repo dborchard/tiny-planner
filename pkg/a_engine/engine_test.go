@@ -14,11 +14,14 @@ func TestCsvFile(t *testing.T) {
 	//TODO: ability to pass custom schema
 
 	df = df.
-		//Filter(logicalplan.Eq(logicalplan.Column{Name: "state"}, logicalplan.LiteralString{Val: "CO"})).
 		Project(
 			logicalplan.Column{Name: "c1"},
 			logicalplan.Column{Name: "c2"},
-		)
+		).
+		Filter(logicalplan.Eq(
+			logicalplan.Column{Name: "c1"},
+			logicalplan.LiteralString{Val: "c"},
+		))
 
 	logicalPlan, _ := df.LogicalPlan()
 	fmt.Println(logicalplan.PrettyPrint(logicalPlan, 0))
