@@ -16,7 +16,7 @@ type IDataFrame interface {
 	Aggregate(groupBy []logicalplan.Expr, aggregateExpr []logicalplan.AggregateExpr) IDataFrame
 
 	Schema() (containers.ISchema, error)
-	Collect() ([]containers.Batch, error)
+	Collect() ([]containers.IBatch, error)
 	Show() error
 
 	LogicalPlan() (logicalplan.LogicalPlan, error)
@@ -76,7 +76,7 @@ func (df *DataFrame) LogicalPlan() (logicalplan.LogicalPlan, error) {
 	return df.plan, nil
 }
 
-func (df *DataFrame) Collect() ([]containers.Batch, error) {
+func (df *DataFrame) Collect() ([]containers.IBatch, error) {
 	physicalPlan, err := df.PhysicalPlan()
 	if err != nil {
 		return nil, err

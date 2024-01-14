@@ -8,7 +8,7 @@ import (
 )
 
 type Expr interface {
-	Evaluate(input containers.Batch) (containers.IVector, error)
+	Evaluate(input containers.IBatch) (containers.IVector, error)
 	String() string
 }
 
@@ -24,7 +24,7 @@ type ColumnExpression struct {
 	Index int
 }
 
-func (col ColumnExpression) Evaluate(input containers.Batch) (containers.IVector, error) {
+func (col ColumnExpression) Evaluate(input containers.IBatch) (containers.IVector, error) {
 	return input.Column(col.Index), nil
 }
 
@@ -42,7 +42,7 @@ func (lit LiteralInt64Expression) String() string {
 	return strconv.FormatInt(lit.Value, 10)
 }
 
-func (lit LiteralInt64Expression) Evaluate(input containers.Batch) (containers.IVector, error) {
+func (lit LiteralInt64Expression) Evaluate(input containers.IBatch) (containers.IVector, error) {
 	return containers.NewConstVector(arrow.PrimitiveTypes.Int64, input.RowCount(), lit.Value), nil
 }
 
@@ -56,7 +56,7 @@ func (lit LiteralFloat64Expression) String() string {
 	return strconv.FormatFloat(lit.Value, 'f', -1, 64)
 }
 
-func (lit LiteralFloat64Expression) Evaluate(input containers.Batch) (containers.IVector, error) {
+func (lit LiteralFloat64Expression) Evaluate(input containers.IBatch) (containers.IVector, error) {
 	return containers.NewConstVector(arrow.PrimitiveTypes.Float64, input.RowCount(), lit.Value), nil
 }
 
@@ -66,7 +66,7 @@ type LiteralStringExpression struct {
 	Value string
 }
 
-func (lit LiteralStringExpression) Evaluate(input containers.Batch) (containers.IVector, error) {
+func (lit LiteralStringExpression) Evaluate(input containers.IBatch) (containers.IVector, error) {
 	return containers.NewConstVector(arrow.BinaryTypes.String, input.RowCount(), lit.Value), nil
 }
 
@@ -82,7 +82,7 @@ type BooleanBinaryExpr struct {
 	R  Expr
 }
 
-func (e BooleanBinaryExpr) Evaluate(input containers.Batch) (containers.IVector, error) {
+func (e BooleanBinaryExpr) Evaluate(input containers.IBatch) (containers.IVector, error) {
 	ll, err := e.L.Evaluate(input)
 	if err != nil {
 		return nil, err

@@ -51,7 +51,7 @@ func (ds *CsvDataSource) loadAndCacheSchema() (containers.ISchema, error) {
 	return schema, nil
 }
 
-func (ds *CsvDataSource) Iterator(proj []string, ctx execution.TaskContext) ([]containers.Batch, error) {
+func (ds *CsvDataSource) Iterator(proj []string, ctx execution.TaskContext) ([]containers.IBatch, error) {
 
 	file, err := os.Open(ds.Filename)
 	if err != nil {
@@ -66,7 +66,7 @@ func (ds *CsvDataSource) Iterator(proj []string, ctx execution.TaskContext) ([]c
 		vectors = append(vectors, containers.NewVector(arrow.BinaryTypes.String, col))
 	}
 
-	return []containers.Batch{{ds.Sch, vectors}}, nil
+	return []containers.IBatch{containers.NewBatch(ds.Sch, vectors)}, nil
 }
 
 func (ds *CsvDataSource) readCsvTable(f *os.File) (header []string, data [][]any) {

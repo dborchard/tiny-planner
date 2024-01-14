@@ -7,6 +7,7 @@ type ISchema interface {
 	IndexOf(name string) int
 	String() string
 	Fields() []arrow.Field
+	GetArrowSchema() *arrow.Schema
 }
 
 var _ ISchema = Schema{}
@@ -48,4 +49,8 @@ func (s Schema) String() string {
 
 func (s Schema) Fields() []arrow.Field {
 	return s.src.Fields()
+}
+
+func (s Schema) GetArrowSchema() *arrow.Schema {
+	return s.src
 }

@@ -11,7 +11,7 @@ import (
 type PhysicalPlan interface {
 	Schema() (containers.ISchema, error)
 	Children() []PhysicalPlan
-	Execute(ctx execution.TaskContext) ([]containers.Batch, error)
+	Execute(ctx execution.TaskContext) ([]containers.IBatch, error)
 }
 
 var _ PhysicalPlan = Scan{}
@@ -36,7 +36,7 @@ func (s Scan) Schema() (containers.ISchema, error) {
 	return schema.Select(s.Projection)
 }
 
-func (s Scan) Execute(ctx execution.TaskContext) ([]containers.Batch, error) {
+func (s Scan) Execute(ctx execution.TaskContext) ([]containers.IBatch, error) {
 	return s.Source.Iterator(s.Projection, ctx)
 }
 
@@ -68,12 +68,12 @@ func (p Projection) Schema() (containers.ISchema, error) {
 	return p.Sch, nil
 }
 
-func (p Projection) Execute(ctx execution.TaskContext) ([]containers.Batch, error) {
+func (p Projection) Execute(ctx execution.TaskContext) ([]containers.IBatch, error) {
 	input, err := p.Input.Execute(ctx)
 	if err != nil {
 		return nil, err
 	}
-	output := make([]containers.Batch, len(input))
+	output := make([]containers.IBatch, len(input))
 
 	for i, batch := range input {
 		vectors := make([]containers.IVector, len(p.Proj))
@@ -83,7 +83,7 @@ func (p Projection) Execute(ctx execution.TaskContext) ([]containers.Batch, erro
 				return nil, err
 			}
 		}
-		output[i] = containers.Batch{Schema: p.Sch, Vectors: vectors}
+		output[i] = containers.NewBatch(p.Sch, vectors)
 	}
 	return output, nil
 }
@@ -107,18 +107,17 @@ func (s Selection) Children() []PhysicalPlan {
 	return []PhysicalPlan{s.Input}
 }
 
-func (s Selection) Execute(ctx execution.TaskContext) ([]containers.Batch, error) {
+func (s Selection) Execute(ctx execution.TaskContext) ([]containers.IBatch, error) {
 	input, err := s.Input.Execute(ctx)
 	if err != nil {
 		return nil, err
 	}
-	output := make([]containers.Batch, len(input))
 	for i, batch := range input {
 		sel, err := s.Filter.Evaluate(batch)
 		if err != nil {
 			return nil, err
 		}
-		output[i] = *batch.Shrink(sel)
+		input[i].Shrink(sel)
 	}
-	return output, nil
+	return input, nil
 }

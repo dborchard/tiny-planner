@@ -47,7 +47,7 @@ func (ds *ParquetDataSource) loadAndCacheSchema() (containers.ISchema, error) {
 	return schema, nil
 }
 
-func (ds *ParquetDataSource) Iterator(projection []string, ctx execution.TaskContext) ([]containers.Batch, error) {
+func (ds *ParquetDataSource) Iterator(projection []string, ctx execution.TaskContext) ([]containers.IBatch, error) {
 	pf, f, err := openParquetFile(ds.Filename)
 	defer f.Close()
 	if err != nil {
@@ -69,7 +69,7 @@ func (ds *ParquetDataSource) Iterator(projection []string, ctx execution.TaskCon
 		}
 	}
 
-	return []containers.Batch{{ds.Sch, vectors}}, nil
+	return []containers.IBatch{containers.NewBatch(ds.Sch, vectors)}, nil
 }
 
 func parquetColumnToVector(colDef parquet.Field, col parquet.ColumnChunk) (containers.IVector, error) {
