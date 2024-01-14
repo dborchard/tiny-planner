@@ -34,8 +34,9 @@ func NewDataFrame(sessionState phyiscalplan.ExecState) *DataFrame {
 }
 
 func (df *DataFrame) Scan(path string, source datasource.TableReader, proj []string) IDataFrame {
-	newPlan := logicalplan.NewBuilder().Scan(path, source, proj)
-	return &DataFrame{planBuilder: newPlan, sessionState: df.sessionState}
+	newDf := DataFrame{sessionState: df.sessionState}
+	newDf.planBuilder = logicalplan.NewBuilder().Scan(path, source, proj)
+	return &newDf
 }
 
 func (df *DataFrame) Project(proj ...logicalplan.Expr) IDataFrame {
