@@ -47,7 +47,7 @@ func (ds *ParquetDataSource) loadAndCacheSchema() (containers.ISchema, error) {
 	return schema, nil
 }
 
-func (ds *ParquetDataSource) Scan(projection []string, ctx execution.TaskContext) ([]containers.Batch, error) {
+func (ds *ParquetDataSource) Iterator(projection []string, ctx execution.TaskContext) ([]containers.Batch, error) {
 	pf, f, err := openParquetFile(ds.Filename)
 	defer f.Close()
 	if err != nil {

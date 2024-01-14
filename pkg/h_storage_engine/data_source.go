@@ -7,7 +7,7 @@ import (
 
 type TableReader interface {
 	Schema() (containers.ISchema, error)
-	Scan(projection []string, ctx execution.TaskContext) ([]containers.Batch, error)
+	Iterator(projection []string, ctx execution.TaskContext) ([]containers.Batch, error)
 
 	// Seek(predicate logicalplan.LogicalExpr) Iterator
 	// Iterator() Iterator

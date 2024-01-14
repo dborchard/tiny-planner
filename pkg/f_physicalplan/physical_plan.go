@@ -37,7 +37,7 @@ func (s Scan) Schema() (containers.ISchema, error) {
 }
 
 func (s Scan) Execute(ctx execution.TaskContext) ([]containers.Batch, error) {
-	return s.Source.Scan(s.Projection, ctx)
+	return s.Source.Iterator(s.Projection, ctx)
 }
 
 func (s Scan) Children() []PhysicalPlan {

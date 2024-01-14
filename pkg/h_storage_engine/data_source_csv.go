@@ -51,7 +51,7 @@ func (ds *CsvDataSource) loadAndCacheSchema() (containers.ISchema, error) {
 	return schema, nil
 }
 
-func (ds *CsvDataSource) Scan(proj []string, ctx execution.TaskContext) ([]containers.Batch, error) {
+func (ds *CsvDataSource) Iterator(proj []string, ctx execution.TaskContext) ([]containers.Batch, error) {
 
 	file, err := os.Open(ds.Filename)
 	if err != nil {
