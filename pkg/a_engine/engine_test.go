@@ -9,7 +9,7 @@ import (
 
 func TestCsvFile(t *testing.T) {
 	ctx := NewContext()
-	df := ctx.ReadCsv("../../test/data/aggregate_test_100.csv", datasource.CsvReadOptions{HasHeader: true})
+	df := ctx.Csv("../../test/data/aggregate_test_100.csv", datasource.CsvReadOptions{HasHeader: true})
 
 	//TODO: ability to pass custom schema
 
@@ -31,7 +31,7 @@ func TestCsvFile(t *testing.T) {
 
 func TestParquetFile(t *testing.T) {
 	ctx := NewContext()
-	df := ctx.ReadParquet("../../test/data/c1_c2_int64.parquet")
+	df := ctx.Parquet("../../test/data/c1_c2_int64.parquet")
 
 	df = df.
 		Project(
