@@ -32,7 +32,7 @@ func NewDataFrame(sessionState phyiscalplan.ExecState) *DataFrame {
 	return &DataFrame{sessionState: sessionState}
 }
 
-func (df *DataFrame) Scan(path string, source datasource.DataSource, proj []string) IDataFrame {
+func (df *DataFrame) Scan(path string, source datasource.TableReader, proj []string) IDataFrame {
 	newPlan, err := logicalplan.NewBuilder().Scan(path, source, proj).Build()
 	if err != nil {
 		return nil

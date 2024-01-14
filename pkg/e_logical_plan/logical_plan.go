@@ -23,7 +23,7 @@ var _ LogicalPlan = Aggregate{}
 
 type Scan struct {
 	Path       string
-	Source     datasource.DataSource
+	Source     datasource.TableReader
 	Projection []string
 }
 

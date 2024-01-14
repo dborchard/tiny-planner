@@ -16,7 +16,7 @@ func From(plan LogicalPlan) Builder {
 	return Builder{plan: plan}
 }
 
-func (b Builder) Scan(path string, source datasource.DataSource, proj []string) Builder {
+func (b Builder) Scan(path string, source datasource.TableReader, proj []string) Builder {
 	return Builder{plan: Scan{Path: path, Source: source, Projection: proj}}
 }
 

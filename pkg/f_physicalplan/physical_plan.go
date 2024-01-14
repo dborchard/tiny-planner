@@ -21,7 +21,7 @@ var _ PhysicalPlan = Selection{}
 //----------------- Scan -----------------
 
 type Scan struct {
-	Source     datasource.DataSource
+	Source     datasource.TableReader
 	Projection []string
 }
 
