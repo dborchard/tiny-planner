@@ -109,7 +109,7 @@ func (r *Batch) StringTable() [][]string {
 	for rIdx := 0; rIdx < r.RowCount(); rIdx++ {
 		row := make([]string, 0)
 		for c := 0; c < r.ColumnCount(); c++ {
-			row = append(row, fmt.Sprintf("%v", r.Column(c).GetValue(rIdx)))
+			row = append(row, fmt.Sprintf("%v", r.Column(c).GetArrowArray().ValueStr(rIdx)))
 		}
 		data = append(data, row)
 	}
