@@ -55,7 +55,7 @@ func (c ConstVector) Len() int {
 }
 
 func (c ConstVector) Shrink(sel IVector) IVector {
-	//TODO: move to abstract class
+	//TODO: optimize
 	var filteredCol []any
 	for i := 0; i < sel.Len(); i++ {
 		if sel.GetValue(i).(bool) {
@@ -69,32 +69,6 @@ func (c ConstVector) Shrink(sel IVector) IVector {
 
 type Vector struct {
 	src arrow.Array
-}
-
-func (v Vector) String() string {
-	return v.src.String()
-}
-
-func (v Vector) Len() int {
-	return v.src.Len()
-}
-
-func (v Vector) GetValue(i int) any {
-	return v.src.GetOneForMarshal(i)
-}
-
-func (v Vector) DataType() arrow.DataType {
-	return v.src.DataType()
-}
-
-func (v Vector) Shrink(sel IVector) IVector {
-	var filteredCol []any
-	for i := 0; i < sel.Len(); i++ {
-		if sel.GetValue(i).(bool) {
-			filteredCol = append(filteredCol, v.GetValue(i))
-		}
-	}
-	return NewVector(v.DataType(), filteredCol)
 }
 
 func NewVector(arrowType arrow.DataType, data []any) Vector {
@@ -145,4 +119,31 @@ func NewVector(arrowType arrow.DataType, data []any) Vector {
 
 	dataArr := builder.NewArray()
 	return Vector{src: dataArr}
+}
+
+func (v Vector) DataType() arrow.DataType {
+	return v.src.DataType()
+}
+
+func (v Vector) GetValue(i int) any {
+	return v.src.GetOneForMarshal(i)
+}
+
+func (v Vector) Len() int {
+	return v.src.Len()
+}
+
+func (v Vector) Shrink(sel IVector) IVector {
+	//TODO: optimize
+	var filteredCol []any
+	for i := 0; i < sel.Len(); i++ {
+		if sel.GetValue(i).(bool) {
+			filteredCol = append(filteredCol, v.GetValue(i))
+		}
+	}
+	return NewVector(v.DataType(), filteredCol)
+}
+
+func (v Vector) String() string {
+	return v.src.String()
 }

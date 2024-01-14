@@ -55,17 +55,3 @@ func (r *Batch) StringTable() [][]string {
 	}
 	return data
 }
-
-//
-//// TODO: replace this
-//func (r *Batch) Rows() []Row {
-//	rows := make([]Row, 0)
-//	for rIdx := 0; rIdx < r.RowCount(); rIdx++ {
-//		row := Row{schema: r.Schema}
-//		for c := 0; c < r.ColumnCount(); c++ {
-//			row.values = append(row.values, r.Column(c).GetValue(rIdx))
-//		}
-//		rows = append(rows, row)
-//	}
-//	return rows
-//}
