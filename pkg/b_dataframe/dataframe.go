@@ -39,17 +39,17 @@ func (df *DataFrame) Scan(path string, source datasource.TableReader, proj []str
 }
 
 func (df *DataFrame) Project(proj ...logicalplan.Expr) IDataFrame {
-	df.planBuilder.Project(proj...)
+	df.planBuilder = df.planBuilder.Project(proj...)
 	return df
 }
 
 func (df *DataFrame) Filter(predicate logicalplan.Expr) IDataFrame {
-	df.planBuilder.Filter(predicate)
+	df.planBuilder = df.planBuilder.Filter(predicate)
 	return df
 }
 
 func (df *DataFrame) Aggregate(groupBy []logicalplan.Expr, aggExpr []logicalplan.AggregateExpr) IDataFrame {
-	df.planBuilder.Aggregate(groupBy, aggExpr)
+	df.planBuilder = df.planBuilder.Aggregate(groupBy, aggExpr)
 	return df
 }
 
