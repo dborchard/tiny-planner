@@ -1,4 +1,4 @@
-package exprLogi
+package logicalplan
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 )
 
 type LogicalPlan interface {
-	Schema() containers.Schema
+	Schema() (containers.ISchema, error)
 	Children() []LogicalPlan
 	String() string
 }
@@ -27,10 +27,13 @@ type Scan struct {
 	Projection []string
 }
 
-func (s Scan) Schema() containers.Schema {
-	schema := s.Source.Schema()
+func (s Scan) Schema() (containers.ISchema, error) {
+	schema, err := s.Source.Schema()
+	if err != nil {
+		return nil, err
+	}
 	if len(s.Projection) == 0 {
-		return schema
+		return schema, nil
 	} else {
 		return schema.Select(s.Projection)
 	}
@@ -51,15 +54,19 @@ func (s Scan) String() string {
 
 type Projection struct {
 	Input LogicalPlan
-	Expr  []LogicalExpr
+	Proj  []Expr
 }
 
-func (p Projection) Schema() containers.Schema {
+func (p Projection) Schema() (containers.ISchema, error) {
 	var fields []arrow.Field
-	for _, e := range p.Expr {
-		fields = append(fields, e.ToColumnDefinition(p.Input))
+	for _, e := range p.Proj {
+		used, err := e.ColumnsUsed(p.Input)
+		if err != nil {
+			return nil, err
+		}
+		fields = append(fields, used...)
 	}
-	return containers.Schema{Schema: arrow.NewSchema(fields, nil)}
+	return containers.NewSchema(fields, nil), nil
 }
 
 func (p Projection) Children() []LogicalPlan {
@@ -68,7 +75,7 @@ func (p Projection) Children() []LogicalPlan {
 
 func (p Projection) String() string {
 	var strList []string
-	for _, e := range p.Expr {
+	for _, e := range p.Proj {
 		strList = append(strList, e.String())
 	}
 	s := strings.Join(strList, ", ")
@@ -79,10 +86,10 @@ func (p Projection) String() string {
 
 type Selection struct {
 	Input  LogicalPlan
-	Filter LogicalExpr
+	Filter Expr
 }
 
-func (s Selection) Schema() containers.Schema {
+func (s Selection) Schema() (containers.ISchema, error) {
 	return s.Input.Schema()
 }
 
@@ -98,19 +105,27 @@ func (s Selection) String() string {
 
 type Aggregate struct {
 	Input         LogicalPlan
-	GroupExpr     []LogicalExpr
+	GroupExpr     []Expr
 	AggregateExpr []AggregateExpr
 }
 
-func (a Aggregate) Schema() containers.Schema {
+func (a Aggregate) Schema() (containers.ISchema, error) {
 	var fields []arrow.Field
 	for _, e := range a.GroupExpr {
-		fields = append(fields, e.ToColumnDefinition(a.Input))
+		used, err := e.ColumnsUsed(a.Input)
+		if err != nil {
+			return nil, err
+		}
+		fields = append(fields, used...)
 	}
 	for _, e := range a.AggregateExpr {
-		fields = append(fields, e.ToColumnDefinition(a.Input))
+		used, err := e.ColumnsUsed(a.Input)
+		if err != nil {
+			return nil, err
+		}
+		fields = append(fields, used...)
 	}
-	return containers.Schema{Schema: arrow.NewSchema(fields, nil)}
+	return containers.NewSchema(fields, nil), nil
 }
 
 func (a Aggregate) Children() []LogicalPlan {

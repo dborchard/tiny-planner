@@ -6,9 +6,13 @@ import (
 )
 
 type DataSource interface {
-	Schema() containers.Schema
-	LoadAndCacheSchema() containers.Schema
-	Scan(projection []string, ctx execution.TaskContext) []containers.Batch
+	Schema() (containers.ISchema, error)
+	Scan(projection []string, ctx execution.TaskContext) ([]containers.Batch, error)
+
+	// Seek(predicate logicalplan.LogicalExpr) Iterator
+	// Iterator() Iterator
+	// HasNext() bool
+	// Next() containers.Batch
 }
 
 var _ DataSource = &CsvDataSource{}

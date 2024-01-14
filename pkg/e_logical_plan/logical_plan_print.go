@@ -1,4 +1,4 @@
-package exprLogi
+package logicalplan
 
 import (
 	"strings"

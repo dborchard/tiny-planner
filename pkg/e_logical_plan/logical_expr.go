@@ -1,26 +1,28 @@
-package exprLogi
+package logicalplan
 
 import (
 	"fmt"
 	"github.com/apache/arrow/go/v12/arrow"
 	"strconv"
+	containers "tiny_planner/pkg/i_containers"
 )
 
-type LogicalExpr interface {
-	ToColumnDefinition(input LogicalPlan) arrow.Field
+type Expr interface {
+	DataType(schema containers.ISchema) (arrow.DataType, error)
+	ColumnsUsed(input LogicalPlan) ([]arrow.Field, error)
 	String() string
 }
 
-var _ LogicalExpr = Column{}
-var _ LogicalExpr = Alias{}
+var _ Expr = Column{}
+var _ Expr = Alias{}
 
-var _ LogicalExpr = BooleanBinaryExpr{}
-var _ LogicalExpr = MathExpr{}
-var _ LogicalExpr = AggregateExpr{}
+var _ Expr = BoolBinaryExpr{}
+var _ Expr = MathExpr{}
+var _ Expr = AggregateExpr{}
 
-var _ LogicalExpr = LiteralString{}
-var _ LogicalExpr = LiteralInt64{}
-var _ LogicalExpr = LiteralFloat64{}
+var _ Expr = LiteralString{}
+var _ Expr = LiteralInt64{}
+var _ Expr = LiteralFloat64{}
 
 // ---------- Column ----------
 
@@ -28,13 +30,26 @@ type Column struct {
 	Name string
 }
 
-func (col Column) ToColumnDefinition(input LogicalPlan) arrow.Field {
-	for _, f := range input.Schema().Fields() {
+func (col Column) DataType(schema containers.ISchema) (arrow.DataType, error) {
+	for _, f := range schema.Fields() {
 		if f.Name == col.Name {
-			return f
+			return f.Type, nil
 		}
 	}
-	panic("SQLError: No column named '$name'")
+	return nil, fmt.Errorf("SQLError: No column named '%s'", col.Name)
+}
+
+func (col Column) ColumnsUsed(input LogicalPlan) ([]arrow.Field, error) {
+	schema, err := input.Schema()
+	if err != nil {
+		return nil, err
+	}
+	for _, f := range schema.Fields() {
+		if f.Name == col.Name {
+			return []arrow.Field{f}, nil
+		}
+	}
+	return nil, fmt.Errorf("SQLError: No column named '%s'", col.Name)
 }
 
 func (col Column) String() string {
@@ -44,15 +59,16 @@ func (col Column) String() string {
 // ---------- Alias ----------
 
 type Alias struct {
-	Expr  LogicalExpr
+	Expr  Expr
 	Alias string
 }
 
-func (expr Alias) ToColumnDefinition(input LogicalPlan) arrow.Field {
-	return arrow.Field{
-		Name: expr.Alias,
-		Type: expr.Expr.ToColumnDefinition(input).Type,
-	}
+func (expr Alias) DataType(schema containers.ISchema) (arrow.DataType, error) {
+	return expr.Expr.DataType(schema)
+}
+
+func (expr Alias) ColumnsUsed(input LogicalPlan) ([]arrow.Field, error) {
+	return expr.Expr.ColumnsUsed(input)
 }
 
 func (expr Alias) String() string {
@@ -65,13 +81,12 @@ type LiteralString struct {
 	Val string
 }
 
-func (lit LiteralString) ToColumnDefinition(input LogicalPlan) arrow.Field {
-	return arrow.Field{
-		Name:     lit.Val,
-		Type:     arrow.BinaryTypes.String,
-		Nullable: true,
-		Metadata: arrow.Metadata{},
-	}
+func (lit LiteralString) DataType(schema containers.ISchema) (arrow.DataType, error) {
+	return arrow.BinaryTypes.String, nil
+}
+
+func (lit LiteralString) ColumnsUsed(input LogicalPlan) ([]arrow.Field, error) {
+	return nil, nil
 }
 
 func (lit LiteralString) String() string {
@@ -82,13 +97,12 @@ type LiteralInt64 struct {
 	Val int64
 }
 
-func (lit LiteralInt64) ToColumnDefinition(input LogicalPlan) arrow.Field {
-	return arrow.Field{
-		Name:     lit.String(),
-		Type:     arrow.PrimitiveTypes.Int64,
-		Nullable: true,
-		Metadata: arrow.Metadata{},
-	}
+func (lit LiteralInt64) DataType(schema containers.ISchema) (arrow.DataType, error) {
+	return arrow.PrimitiveTypes.Int64, nil
+}
+
+func (lit LiteralInt64) ColumnsUsed(input LogicalPlan) ([]arrow.Field, error) {
+	return nil, nil
 }
 
 func (lit LiteralInt64) String() string {
@@ -99,13 +113,12 @@ type LiteralFloat64 struct {
 	Val float64
 }
 
-func (lit LiteralFloat64) ToColumnDefinition(input LogicalPlan) arrow.Field {
-	return arrow.Field{
-		Name:     lit.String(),
-		Type:     arrow.PrimitiveTypes.Float64,
-		Nullable: true,
-		Metadata: arrow.Metadata{},
-	}
+func (lit LiteralFloat64) DataType(schema containers.ISchema) (arrow.DataType, error) {
+	return arrow.PrimitiveTypes.Float64, nil
+}
+
+func (lit LiteralFloat64) ColumnsUsed(input LogicalPlan) ([]arrow.Field, error) {
+	return nil, nil
 }
 
 func (lit LiteralFloat64) String() string {

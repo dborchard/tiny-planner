@@ -1,9 +1,8 @@
-package exec
+package physicalplan
 
 import (
 	"time"
-	exprLogi "tiny_planner/pkg/e_logical_plan"
-	"tiny_planner/pkg/f_exec_engine/a_operators"
+	logicalplan "tiny_planner/pkg/e_logical_plan"
 	"tiny_planner/pkg/g_exec_runtime"
 )
 
@@ -33,6 +32,6 @@ func (s ExecState) TaskContext() execution.TaskContext {
 	}
 }
 
-func (s ExecState) CreatePhysicalPlan(plan exprLogi.LogicalPlan) exprPhy.ExecutionPlan {
+func (s ExecState) CreatePhysicalPlan(plan logicalplan.LogicalPlan) (PhysicalPlan, error) {
 	return s.QueryPlanner.CreatePhyPlan(plan, s)
 }

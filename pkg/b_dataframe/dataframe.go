@@ -3,75 +3,101 @@ package dataframe
 import (
 	"github.com/olekukonko/tablewriter"
 	"os"
-	exprLogi "tiny_planner/pkg/e_logical_plan"
-	exec "tiny_planner/pkg/f_exec_engine"
-	"tiny_planner/pkg/f_exec_engine/a_operators"
+	logicalplan "tiny_planner/pkg/e_logical_plan"
+	phyiscalplan "tiny_planner/pkg/f_physicalplan"
 	"tiny_planner/pkg/g_exec_runtime"
+	datasource "tiny_planner/pkg/h_storage_engine"
 	containers "tiny_planner/pkg/i_containers"
 )
 
 type IDataFrame interface {
-	Project(expr []exprLogi.LogicalExpr) IDataFrame
-	Filter(expr exprLogi.LogicalExpr) IDataFrame
-	Aggregate(groupBy []exprLogi.LogicalExpr, aggregateExpr []exprLogi.AggregateExpr) IDataFrame
+	Project(expr ...logicalplan.Expr) (IDataFrame, error)
+	Filter(expr logicalplan.Expr) (IDataFrame, error)
+	Aggregate(groupBy []logicalplan.Expr, aggregateExpr []logicalplan.AggregateExpr) (IDataFrame, error)
 
-	Schema() containers.Schema
-	Collect() []containers.Batch
-	Show()
+	Schema() (containers.ISchema, error)
+	Collect() ([]containers.Batch, error)
+	Show() error
 
-	LogicalPlan() exprLogi.LogicalPlan
-	PhysicalPlan() exprPhy.ExecutionPlan
+	LogicalPlan() (logicalplan.LogicalPlan, error)
+	PhysicalPlan() (phyiscalplan.PhysicalPlan, error)
 }
 
 type DataFrame struct {
-	sessionState exec.ExecState
-	plan         exprLogi.LogicalPlan
+	sessionState phyiscalplan.ExecState
+	plan         logicalplan.LogicalPlan
 }
 
-func NewDataFrame(sessionState exec.ExecState, plan exprLogi.LogicalPlan) *DataFrame {
-	return &DataFrame{sessionState: sessionState, plan: plan}
+func NewDataFrame(sessionState phyiscalplan.ExecState) *DataFrame {
+	return &DataFrame{sessionState: sessionState}
 }
 
-func (df *DataFrame) Project(proj []exprLogi.LogicalExpr) IDataFrame {
-	newPlan := exprLogi.From(df.plan).Project(proj).Build()
-	return &DataFrame{plan: newPlan, sessionState: df.sessionState}
+func (df *DataFrame) Scan(path string, source datasource.DataSource, proj []string) (IDataFrame, error) {
+	newPlan, err := logicalplan.NewBuilder().Scan(path, source, proj).Build()
+	if err != nil {
+		return nil, err
+	}
+	return &DataFrame{plan: newPlan, sessionState: df.sessionState}, nil
 }
 
-func (df *DataFrame) Filter(predicate exprLogi.LogicalExpr) IDataFrame {
-	newPlan := exprLogi.From(df.plan).Filter(predicate).Build()
-	return &DataFrame{plan: newPlan, sessionState: df.sessionState}
+func (df *DataFrame) Project(proj ...logicalplan.Expr) (IDataFrame, error) {
+	newPlan, err := logicalplan.From(df.plan).Project(proj...).Build()
+	if err != nil {
+		return nil, err
+	}
+	return &DataFrame{plan: newPlan, sessionState: df.sessionState}, nil
 }
 
-func (df *DataFrame) Aggregate(groupBy []exprLogi.LogicalExpr, aggExpr []exprLogi.AggregateExpr) IDataFrame {
-	newPlan := exprLogi.From(df.plan).Aggregate(groupBy, aggExpr).Build()
-	return &DataFrame{plan: newPlan, sessionState: df.sessionState}
+func (df *DataFrame) Filter(predicate logicalplan.Expr) (IDataFrame, error) {
+	newPlan, err := logicalplan.From(df.plan).Filter(predicate).Build()
+	if err != nil {
+		return nil, err
+	}
+	return &DataFrame{plan: newPlan, sessionState: df.sessionState}, nil
+}
+
+func (df *DataFrame) Aggregate(groupBy []logicalplan.Expr, aggExpr []logicalplan.AggregateExpr) (IDataFrame, error) {
+	newPlan, err := logicalplan.From(df.plan).Aggregate(groupBy, aggExpr).Build()
+	if err != nil {
+		return nil, err
+	}
+	return &DataFrame{plan: newPlan, sessionState: df.sessionState}, nil
 }
 
 func (df *DataFrame) TaskContext() execution.TaskContext {
 	return df.sessionState.TaskContext()
 }
 
-func (df *DataFrame) Schema() containers.Schema {
+func (df *DataFrame) Schema() (containers.ISchema, error) {
 	return df.plan.Schema()
 }
 
-func (df *DataFrame) LogicalPlan() exprLogi.LogicalPlan {
-	return df.plan
+func (df *DataFrame) LogicalPlan() (logicalplan.LogicalPlan, error) {
+	return df.plan, nil
 }
 
-func (df *DataFrame) Collect() []containers.Batch {
-	physicalPlan := df.PhysicalPlan()
-	res := physicalPlan.Execute(df.TaskContext())
-	return res
+func (df *DataFrame) Collect() ([]containers.Batch, error) {
+	physicalPlan, err := df.PhysicalPlan()
+	if err != nil {
+		return nil, err
+	}
+	return physicalPlan.Execute(df.TaskContext())
 }
 
-func (df *DataFrame) Show() {
-	result := df.Collect()
+func (df *DataFrame) Show() error {
+	result, err := df.Collect()
+	if err != nil {
+		return err
+	}
 	table := tablewriter.NewWriter(os.Stdout)
 
 	// 1. add headers
 	headers := make([]string, 0)
-	for _, field := range df.Schema().Fields() {
+	schema, err := df.Schema()
+	if err != nil {
+		return err
+	}
+	for _, field := range schema.Fields() {
 		headers = append(headers, field.Name)
 	}
 	table.SetHeader(headers)
@@ -83,8 +109,9 @@ func (df *DataFrame) Show() {
 
 	// 3. render
 	table.Render()
+	return nil
 }
 
-func (df *DataFrame) PhysicalPlan() exprPhy.ExecutionPlan {
+func (df *DataFrame) PhysicalPlan() (phyiscalplan.PhysicalPlan, error) {
 	return df.sessionState.CreatePhysicalPlan(df.plan)
 }

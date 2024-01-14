@@ -1,4 +1,4 @@
-package exprLogi
+package logicalplan
 
 import (
 	"fmt"
@@ -18,14 +18,14 @@ func TestLogicalPlan_LogicalPlan(t *testing.T) {
 		filterExpr := Eq(Column{Name: "state"}, LiteralString{Val: "CO"})
 		selection := Selection{Input: scan, Filter: filterExpr} // 2. WHERE
 
-		projExpr := []LogicalExpr{
+		projExpr := []Expr{
 			Column{Name: "id"},
 			Column{Name: "first_name"},
 			Column{Name: "last_name"},
 			Column{Name: "state"},
 			Column{Name: "salary"},
 		}
-		projection := Projection{Input: selection, Expr: projExpr} // 3. SELECT col1, col2
+		projection := Projection{Input: selection, Proj: projExpr} // 3. SELECT col1, col2
 
 		finalPlan = projection
 	}

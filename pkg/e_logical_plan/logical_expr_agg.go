@@ -1,43 +1,45 @@
-package exprLogi
+package logicalplan
 
 import (
 	"fmt"
 	"github.com/apache/arrow/go/v12/arrow"
+	containers "tiny_planner/pkg/i_containers"
 )
 
 // ---------- Agg----------
 
 type AggregateExpr struct {
 	Name string
-	Expr LogicalExpr
+	Expr Expr
+}
+
+func (e AggregateExpr) DataType(schema containers.ISchema) (arrow.DataType, error) {
+	return e.Expr.DataType(schema)
 }
 
 func (e AggregateExpr) String() string {
 	return fmt.Sprintf("%s(%s)", e.Name, e.String())
 }
 
-func (e AggregateExpr) ToColumnDefinition(input LogicalPlan) arrow.Field {
-	return arrow.Field{
-		Name: e.Name,
-		Type: e.Expr.ToColumnDefinition(input).Type,
-	}
+func (e AggregateExpr) ColumnsUsed(input LogicalPlan) ([]arrow.Field, error) {
+	return e.Expr.ColumnsUsed(input)
 }
-func Sum(input LogicalExpr) AggregateExpr {
+func Sum(input Expr) AggregateExpr {
 	return AggregateExpr{"SUM", input}
 }
 
-func Min(input LogicalExpr) AggregateExpr {
+func Min(input Expr) AggregateExpr {
 	return AggregateExpr{"MIN", input}
 }
 
-func Max(input LogicalExpr) AggregateExpr {
+func Max(input Expr) AggregateExpr {
 	return AggregateExpr{"MAX", input}
 }
 
-func Avg(input LogicalExpr) AggregateExpr {
+func Avg(input Expr) AggregateExpr {
 	return AggregateExpr{"AVG", input}
 }
 
-func Count(input LogicalExpr) AggregateExpr {
+func Count(input Expr) AggregateExpr {
 	return AggregateExpr{"COUNT", input}
 }

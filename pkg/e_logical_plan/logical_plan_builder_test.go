@@ -1,4 +1,4 @@
-package exprLogi
+package logicalplan
 
 import (
 	"fmt"
@@ -10,17 +10,17 @@ import (
 func TestLogicalPlan_Builder(t *testing.T) {
 
 	csv := datasource.CsvDataSource{Filename: "employees.csv", HasHeaders: true, BatchSize: 100}
-	scan := Scan{Path: "employee", Source: &csv, Projection: []string{}} // 1. FROM
 
-	plan := From(scan).
+	plan, _ := NewBuilder().
+		Scan("employees.csv", &csv, []string{}).
 		Filter(Eq(Column{Name: "state"}, LiteralString{Val: "CO"})).
-		Project([]LogicalExpr{
+		Project(
 			Column{Name: "id"},
 			Column{Name: "first_name"},
 			Column{Name: "last_name"},
 			Column{Name: "state"},
 			Column{Name: "salary"},
-		}).
+		).
 		Build()
 
 	// Print the logical plan and Test
@@ -29,7 +29,7 @@ func TestLogicalPlan_Builder(t *testing.T) {
 
 	expected := `Projection: #id, #first_name, #last_name, #state, #salary
 	Filter: #state = 'CO'
-		Scan: employee; projExpr=None
+		Scan: employees.csv; projExpr=None
 `
 	assert.Equal(t, expected, actual, "projection should equal")
 }

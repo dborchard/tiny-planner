@@ -12,56 +12,52 @@ import (
 
 type CsvDataSource struct {
 	Filename   string
-	Sch        containers.Schema
+	Sch        containers.ISchema
 	HasHeaders bool
 	BatchSize  int
 }
 
-func (ds *CsvDataSource) LoadAndCacheSchema() containers.Schema {
+func (ds *CsvDataSource) Schema() (containers.ISchema, error) {
+	if ds.Sch == nil {
+		return ds.loadAndCacheSchema()
+	}
+	return ds.Sch, nil
+}
+
+func (ds *CsvDataSource) loadAndCacheSchema() (containers.ISchema, error) {
 	// 1. Open File
 	file, err := os.Open(ds.Filename)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	defer func(file *os.File) {
-		err = file.Close()
-	}(file)
+	defer file.Close()
 
 	// 2. Read CSV
 	reader := csv.NewReader(file)
 	header, err := reader.Read()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	// 3. Create Arrow Schema
+	// 3. Create Arrow ISchema
 	fields := make([]arrow.Field, len(header))
 	for i, name := range header {
 		fields[i] = arrow.Field{Name: name, Type: arrow.BinaryTypes.String}
 	}
 
-	schema := containers.Schema{Schema: arrow.NewSchema(fields, nil)}
+	schema := containers.NewSchema(fields, nil)
 	ds.Sch = schema
 
-	return schema
+	return schema, nil
 }
 
-func (ds *CsvDataSource) Schema() containers.Schema {
-	return ds.Sch
-}
-
-func (ds *CsvDataSource) Scan(proj []string, ctx execution.TaskContext) []containers.Batch {
+func (ds *CsvDataSource) Scan(proj []string, ctx execution.TaskContext) ([]containers.Batch, error) {
 
 	file, err := os.Open(ds.Filename)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer func(f *os.File) {
-		err := f.Close()
-		if err != nil {
-			panic(err)
-		}
-	}(file)
+	defer file.Close()
 
 	_, cols := ds.readCsvTable(file)
 
@@ -70,7 +66,7 @@ func (ds *CsvDataSource) Scan(proj []string, ctx execution.TaskContext) []contai
 		vectors = append(vectors, containers.NewVector(arrow.BinaryTypes.String, len(col), col))
 	}
 
-	return []containers.Batch{{ds.Sch, vectors}}
+	return []containers.Batch{{ds.Sch, vectors}}, nil
 }
 
 func (ds *CsvDataSource) readCsvTable(f *os.File) (header []string, data [][]any) {

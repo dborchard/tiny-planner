@@ -1,7 +1,7 @@
 package execution
 
 type RuntimeEnv struct {
-	MemoryPool MemPool
+	MemoryPool *MemPool
 	//DiskManager DiskManager
 	//CacheManager CacheManager
 	//ObjectStoreRegistry ObjectStoreRegistry
@@ -9,6 +9,6 @@ type RuntimeEnv struct {
 
 func NewRuntimeEnv() *RuntimeEnv {
 	return &RuntimeEnv{
-		MemoryPool: MemPool{},
+		MemoryPool: &MemPool{},
 	}
 }

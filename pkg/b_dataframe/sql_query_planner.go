@@ -6,6 +6,6 @@ import (
 )
 
 type QueryPlanner interface {
-	CreateLogExpr(e ast.SqlExpr, input IDataFrame) exprLogi.LogicalExpr
+	CreateLogicalExpr(e ast.SqlExpr, input IDataFrame) logicalplan.Expr
 	CreateDataFrame(lp ast.SqlExpr, tables map[string]IDataFrame) IDataFrame
 }

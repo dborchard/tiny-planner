@@ -6,7 +6,7 @@ import (
 )
 
 type Batch struct {
-	Schema  Schema
+	Schema  ISchema
 	Vectors []IVector
 }
 

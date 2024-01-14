@@ -1,11 +1,11 @@
 package containers
 
 type IRow interface {
-	Schema() Schema
-	Values() []interface{}
+	Schema() ISchema
+	Values() []any
 }
 
 type Row struct {
-	schema Schema
-	values []interface{}
+	schema ISchema
+	values []any
 }

@@ -7,10 +7,10 @@ import (
 )
 
 func TestParquetDataSource_Scan(t *testing.T) {
-	ds := ParquetDataSource{Filename: "/Users/arjunsunilkumar/PycharmProjects/mo-benchmark-test/sample_int32.parquet"}
-	ds.LoadAndCacheSchema()
+	ds := ParquetDataSource{Filename: "../../test/data/c1_c2_int32.parquet"}
+	ds.loadAndCacheSchema()
 
-	res := ds.Scan([]string{"c1", "c2"}, execution.TaskContext{})
+	res, _ := ds.Scan([]string{"c1", "c2"}, execution.TaskContext{})
 	for _, batch := range res {
 		fmt.Println(batch)
 	}

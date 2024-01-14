@@ -12,14 +12,21 @@ import (
 
 type ParquetDataSource struct {
 	Filename string
-	Sch      containers.Schema
+	Sch      containers.ISchema
 }
 
-func (ds *ParquetDataSource) LoadAndCacheSchema() containers.Schema {
+func (ds *ParquetDataSource) Schema() (containers.ISchema, error) {
+	if ds.Sch == nil {
+		return ds.loadAndCacheSchema()
+	}
+	return ds.Sch, nil
+}
+
+func (ds *ParquetDataSource) loadAndCacheSchema() (containers.ISchema, error) {
 	pf, f, err := openParquetFile(ds.Filename)
 	defer f.Close()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	var fields []arrow.Field
@@ -30,25 +37,21 @@ func (ds *ParquetDataSource) LoadAndCacheSchema() containers.Schema {
 		case parquet.Int64:
 			fields = append(fields, arrow.Field{Name: field.Name(), Type: arrow.PrimitiveTypes.Int64})
 		default:
-			panic(fmt.Sprintf("unsupported type %s", field.Type().Kind()))
+			return nil, fmt.Errorf("unsupported type %s", field.Type().Kind())
 		}
 	}
 
-	schema := containers.Schema{Schema: arrow.NewSchema(fields, nil)}
+	schema := containers.NewSchema(fields, nil)
 	ds.Sch = schema
 
-	return schema
+	return schema, nil
 }
 
-func (ds *ParquetDataSource) Schema() containers.Schema {
-	return ds.Sch
-}
-
-func (ds *ParquetDataSource) Scan(projection []string, ctx execution.TaskContext) []containers.Batch {
+func (ds *ParquetDataSource) Scan(projection []string, ctx execution.TaskContext) ([]containers.Batch, error) {
 	pf, f, err := openParquetFile(ds.Filename)
 	defer f.Close()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	var vectors []containers.IVector
@@ -58,14 +61,18 @@ func (ds *ParquetDataSource) Scan(projection []string, ctx execution.TaskContext
 			if !parquetColumnIn(colDef, projection) {
 				continue
 			}
-			vectors = append(vectors, parquetColumnToVector(colDef, rg.ColumnChunks()[c]))
+			vector, err := parquetColumnToVector(colDef, rg.ColumnChunks()[c])
+			if err != nil {
+				return nil, err
+			}
+			vectors = append(vectors, vector)
 		}
 	}
 
-	return []containers.Batch{{ds.Sch, vectors}}
+	return []containers.Batch{{ds.Sch, vectors}}, nil
 }
 
-func parquetColumnToVector(colDef parquet.Field, col parquet.ColumnChunk) containers.IVector {
+func parquetColumnToVector(colDef parquet.Field, col parquet.ColumnChunk) (containers.IVector, error) {
 	var colType arrow.DataType
 	colData := make([]any, 0)
 
@@ -76,7 +83,7 @@ func parquetColumnToVector(colDef parquet.Field, col parquet.ColumnChunk) contai
 			if err == io.EOF {
 				break
 			} else {
-				panic(err)
+				return nil, err
 			}
 		}
 
@@ -96,10 +103,10 @@ func parquetColumnToVector(colDef parquet.Field, col parquet.ColumnChunk) contai
 				colData = append(colData, value.Int64())
 			}
 		default:
-			panic("unsupported type")
+			return nil, fmt.Errorf("unsupported type %s", colDef.Type().Kind())
 		}
 	}
-	return containers.NewVector(colType, len(colData), colData)
+	return containers.NewVector(colType, len(colData), colData), nil
 }
 
 func parquetColumnIn(columnDef parquet.Field, projections []string) bool {
