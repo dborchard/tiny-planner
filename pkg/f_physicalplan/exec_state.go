@@ -1,6 +1,7 @@
 package physicalplan
 
 import (
+	"context"
 	"time"
 	logicalplan "tiny_planner/pkg/e_logical_plan"
 	"tiny_planner/pkg/g_exec_runtime"
@@ -29,6 +30,7 @@ func (s ExecState) TaskContext() execution.TaskContext {
 		SessionID: s.SessionID,
 		TaskID:    time.Now().String(),
 		Runtime:   s.RuntimeEnv,
+		Ctx:       context.Background(),
 	}
 }
 

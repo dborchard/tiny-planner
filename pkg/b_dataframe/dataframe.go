@@ -26,7 +26,7 @@ type IDataFrame interface {
 
 type DataFrame struct {
 	sessionState phyiscalplan.ExecState
-	plan         logicalplan.LogicalPlan
+	planBuilder  logicalplan.Builder
 }
 
 func NewDataFrame(sessionState phyiscalplan.ExecState) *DataFrame {
@@ -34,35 +34,23 @@ func NewDataFrame(sessionState phyiscalplan.ExecState) *DataFrame {
 }
 
 func (df *DataFrame) Scan(path string, source datasource.TableReader, proj []string) IDataFrame {
-	newPlan, err := logicalplan.NewBuilder().Scan(path, source, proj).Build()
-	if err != nil {
-		return nil
-	}
-	return &DataFrame{plan: newPlan, sessionState: df.sessionState}
+	newPlan := logicalplan.NewBuilder().Scan(path, source, proj)
+	return &DataFrame{planBuilder: newPlan, sessionState: df.sessionState}
 }
 
 func (df *DataFrame) Project(proj ...logicalplan.Expr) IDataFrame {
-	newPlan, err := logicalplan.From(df.plan).Project(proj...).Build()
-	if err != nil {
-		return nil
-	}
-	return &DataFrame{plan: newPlan, sessionState: df.sessionState}
+	df.planBuilder.Project(proj...)
+	return df
 }
 
 func (df *DataFrame) Filter(predicate logicalplan.Expr) IDataFrame {
-	newPlan, err := logicalplan.From(df.plan).Filter(predicate).Build()
-	if err != nil {
-		return nil
-	}
-	return &DataFrame{plan: newPlan, sessionState: df.sessionState}
+	df.planBuilder.Filter(predicate)
+	return df
 }
 
 func (df *DataFrame) Aggregate(groupBy []logicalplan.Expr, aggExpr []logicalplan.AggregateExpr) IDataFrame {
-	newPlan, err := logicalplan.From(df.plan).Aggregate(groupBy, aggExpr).Build()
-	if err != nil {
-		return nil
-	}
-	return &DataFrame{plan: newPlan, sessionState: df.sessionState}
+	df.planBuilder.Aggregate(groupBy, aggExpr)
+	return df
 }
 
 func (df *DataFrame) TaskContext() execution.TaskContext {
@@ -70,11 +58,15 @@ func (df *DataFrame) TaskContext() execution.TaskContext {
 }
 
 func (df *DataFrame) Schema() (containers.ISchema, error) {
-	return df.plan.Schema()
+	build, err := df.planBuilder.Build()
+	if err != nil {
+		return nil, err
+	}
+	return build.Schema()
 }
 
 func (df *DataFrame) LogicalPlan() (logicalplan.LogicalPlan, error) {
-	return df.plan, nil
+	return df.planBuilder.Build()
 }
 
 func (df *DataFrame) Execute(ctx context.Context, callback datasource.Callback) error {
@@ -120,5 +112,9 @@ func (df *DataFrame) Show() error {
 }
 
 func (df *DataFrame) PhysicalPlan() (phyiscalplan.PhysicalPlan, error) {
-	return df.sessionState.CreatePhysicalPlan(df.plan)
+	plan, err := df.LogicalPlan()
+	if err != nil {
+		return nil, err
+	}
+	return df.sessionState.CreatePhysicalPlan(plan)
 }
