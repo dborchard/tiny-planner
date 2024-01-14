@@ -16,7 +16,7 @@ func TestLogicalPlan_LogicalPlan(t *testing.T) {
 		scan := Scan{Path: "employee", Source: &csv, Projection: []string{}} // 1. FROM
 
 		filterExpr := Eq(Column{Name: "state"}, LiteralString{Val: "CO"})
-		selection := Selection{Input: scan, Filter: filterExpr} // 2. WHERE
+		selection := Selection{Next: scan, Filter: filterExpr} // 2. WHERE
 
 		projExpr := []Expr{
 			Column{Name: "id"},
@@ -25,7 +25,7 @@ func TestLogicalPlan_LogicalPlan(t *testing.T) {
 			Column{Name: "state"},
 			Column{Name: "salary"},
 		}
-		projection := Projection{Input: selection, Proj: projExpr} // 3. SELECT col1, col2
+		projection := Projection{Next: selection, Proj: projExpr} // 3. SELECT col1, col2
 
 		finalPlan = projection
 	}

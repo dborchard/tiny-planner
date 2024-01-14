@@ -46,5 +46,8 @@ func TestParquetFile(t *testing.T) {
 	logicalPlan, _ := df.LogicalPlan()
 	fmt.Println(logicalplan.PrettyPrint(logicalPlan, 0))
 
-	_ = df.Show()
+	err := df.Show()
+	if err != nil {
+		t.Error(err)
+	}
 }

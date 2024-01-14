@@ -1,6 +1,7 @@
 package datasource
 
 import (
+	"context"
 	"encoding/csv"
 	"github.com/apache/arrow/go/v12/arrow"
 	"io"
@@ -15,6 +16,11 @@ type CsvDataSource struct {
 	Sch        containers.ISchema
 	HasHeaders bool
 	BatchSize  int
+}
+
+func (ds *CsvDataSource) View(ctx context.Context, fn func(ctx context.Context, tx uint64) error) error {
+	tx := uint64(0) // TODO: this is timestamp
+	return fn(ctx, tx)
 }
 
 func (ds *CsvDataSource) Schema() (containers.ISchema, error) {
@@ -51,7 +57,7 @@ func (ds *CsvDataSource) loadAndCacheSchema() (containers.ISchema, error) {
 	return schema, nil
 }
 
-func (ds *CsvDataSource) Iterator(proj []string, ctx execution.TaskContext) ([]containers.IBatch, error) {
+func (ds *CsvDataSource) Iterator(proj []string, ctx execution.TaskContext, callbacks []Callback) error {
 
 	file, err := os.Open(ds.Filename)
 	if err != nil {
@@ -66,7 +72,7 @@ func (ds *CsvDataSource) Iterator(proj []string, ctx execution.TaskContext) ([]c
 		vectors = append(vectors, containers.NewVector(arrow.BinaryTypes.String, col))
 	}
 
-	return []containers.IBatch{containers.NewBatch(ds.Sch, vectors)}, nil
+	return nil
 }
 
 func (ds *CsvDataSource) readCsvTable(f *os.File) (header []string, data [][]any) {

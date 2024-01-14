@@ -59,14 +59,15 @@ func (d DefaultQueryPlanner) createScan(scan logicalplan.Scan, state ExecState) 
 }
 
 func (d DefaultQueryPlanner) createProjection(projection logicalplan.Projection, state ExecState) (PhysicalPlan, error) {
-	input, err := d.CreatePhyPlan(projection.Input, state)
+	next, err := d.CreatePhyPlan(projection.Next, state)
+
 	if err != nil {
 		return nil, err
 	}
 
 	proj := make([]Expr, len(projection.Proj))
 	for i, e := range projection.Proj {
-		schema, err := input.Schema()
+		schema, err := next.Schema()
 		if err != nil {
 			return nil, err
 		}
@@ -80,11 +81,11 @@ func (d DefaultQueryPlanner) createProjection(projection logicalplan.Projection,
 	if err != nil {
 		return nil, err
 	}
-	return Projection{Input: input, Proj: proj, Sch: schema}, nil
+	return Projection{Next: next, Proj: proj, Sch: schema}, nil
 }
 
 func (d DefaultQueryPlanner) createSelection(selection logicalplan.Selection, state ExecState) (PhysicalPlan, error) {
-	input, err := d.CreatePhyPlan(selection.Input, state)
+	input, err := d.CreatePhyPlan(selection.Next, state)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +98,7 @@ func (d DefaultQueryPlanner) createSelection(selection logicalplan.Selection, st
 	if err != nil {
 		return nil, err
 	}
-	return Selection{Input: input, Filter: filterExpr}, nil
+	return Selection{Next: input, Filter: filterExpr}, nil
 }
 
 func (d DefaultQueryPlanner) createAggregate(aggregate logicalplan.Aggregate, state ExecState) (PhysicalPlan, error) {

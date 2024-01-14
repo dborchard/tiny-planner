@@ -1,6 +1,7 @@
 package dataframe
 
 import (
+	"context"
 	"github.com/olekukonko/tablewriter"
 	"os"
 	logicalplan "tiny_planner/pkg/e_logical_plan"
@@ -16,7 +17,7 @@ type IDataFrame interface {
 	Aggregate(groupBy []logicalplan.Expr, aggregateExpr []logicalplan.AggregateExpr) IDataFrame
 
 	Schema() (containers.ISchema, error)
-	Collect() ([]containers.IBatch, error)
+	Execute(ctx context.Context, callback datasource.Callback) error
 	Show() error
 
 	LogicalPlan() (logicalplan.LogicalPlan, error)
@@ -76,16 +77,22 @@ func (df *DataFrame) LogicalPlan() (logicalplan.LogicalPlan, error) {
 	return df.plan, nil
 }
 
-func (df *DataFrame) Collect() ([]containers.IBatch, error) {
+func (df *DataFrame) Execute(ctx context.Context, callback datasource.Callback) error {
 	physicalPlan, err := df.PhysicalPlan()
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return physicalPlan.Execute(df.TaskContext())
+	return physicalPlan.Execute(df.TaskContext(), callback)
 }
 
 func (df *DataFrame) Show() error {
-	result, err := df.Collect()
+
+	result := make([]containers.IBatch, 0)
+	err := df.Execute(context.TODO(), func(ctx context.Context, r containers.IBatch) error {
+		result = append(result, r)
+		return nil
+	})
+
 	if err != nil {
 		return err
 	}

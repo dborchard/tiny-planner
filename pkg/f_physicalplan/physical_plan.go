@@ -1,6 +1,7 @@
 package physicalplan
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	execution "tiny_planner/pkg/g_exec_runtime"
@@ -11,7 +12,9 @@ import (
 type PhysicalPlan interface {
 	Schema() (containers.ISchema, error)
 	Children() []PhysicalPlan
-	Execute(ctx execution.TaskContext) ([]containers.IBatch, error)
+	Callback(ctx context.Context, r containers.IBatch) error
+	Execute(ctx execution.TaskContext, callback datasource.Callback) error
+	SetNext(next PhysicalPlan)
 }
 
 var _ PhysicalPlan = Scan{}
@@ -21,8 +24,17 @@ var _ PhysicalPlan = Selection{}
 //----------------- Scan -----------------
 
 type Scan struct {
+	callback   datasource.Callback
 	Source     datasource.TableReader
 	Projection []string
+}
+
+func (s Scan) SetNext(next PhysicalPlan) {
+	panic("bug")
+}
+
+func (s Scan) Callback(ctx context.Context, r containers.IBatch) error {
+	return s.callback(ctx, r)
 }
 
 func (s Scan) Schema() (containers.ISchema, error) {
@@ -36,12 +48,19 @@ func (s Scan) Schema() (containers.ISchema, error) {
 	return schema.Select(s.Projection)
 }
 
-func (s Scan) Execute(ctx execution.TaskContext) ([]containers.IBatch, error) {
-	return s.Source.Iterator(s.Projection, ctx)
+func (s Scan) Execute(ctx execution.TaskContext, callback datasource.Callback) error {
+	s.callback = callback
+
+	callbacks := make([]datasource.Callback, 0, len(s.Children()))
+	for _, plan := range s.Children() {
+		callbacks = append(callbacks, plan.Callback)
+	}
+
+	return s.Source.Iterator(s.Projection, ctx, callbacks)
 }
 
 func (s Scan) Children() []PhysicalPlan {
-	return []PhysicalPlan{}
+	return nil
 }
 
 func (s Scan) String() string {
@@ -55,9 +74,25 @@ func (s Scan) String() string {
 //----------------- Projection -----------------
 
 type Projection struct {
-	Input PhysicalPlan
-	Sch   containers.ISchema
-	Proj  []Expr
+	Next PhysicalPlan
+	Sch  containers.ISchema
+	Proj []Expr
+}
+
+func (p Projection) SetNext(next PhysicalPlan) {
+	p.Next = next
+}
+
+func (p Projection) Callback(ctx context.Context, batch containers.IBatch) error {
+	vectors := make([]containers.IVector, len(p.Proj))
+	var err error
+	for colIdx, expr := range p.Proj {
+		vectors[colIdx], err = expr.Evaluate(batch)
+		if err != nil {
+			return err
+		}
+	}
+	return p.Next.Callback(ctx, containers.NewBatch(p.Sch, vectors))
 }
 
 func (p Projection) String() string {
@@ -68,56 +103,42 @@ func (p Projection) Schema() (containers.ISchema, error) {
 	return p.Sch, nil
 }
 
-func (p Projection) Execute(ctx execution.TaskContext) ([]containers.IBatch, error) {
-	input, err := p.Input.Execute(ctx)
-	if err != nil {
-		return nil, err
-	}
-	output := make([]containers.IBatch, len(input))
-
-	for i, batch := range input {
-		vectors := make([]containers.IVector, len(p.Proj))
-		for j, expr := range p.Proj {
-			vectors[j], err = expr.Evaluate(batch)
-			if err != nil {
-				return nil, err
-			}
-		}
-		output[i] = containers.NewBatch(p.Sch, vectors)
-	}
-	return output, nil
+func (p Projection) Execute(ctx execution.TaskContext, callback datasource.Callback) error {
+	panic("error in Projection Execute")
 }
 
 func (p Projection) Children() []PhysicalPlan {
-	return []PhysicalPlan{p.Input}
+	return []PhysicalPlan{p.Next}
 }
 
 //----------------- Selection -----------------
 
 type Selection struct {
-	Input  PhysicalPlan
+	Next   PhysicalPlan
 	Filter Expr
 }
 
+func (s Selection) SetNext(next PhysicalPlan) {
+	s.Next = next
+}
+
+func (s Selection) Callback(ctx context.Context, batch containers.IBatch) error {
+	sel, err := s.Filter.Evaluate(batch)
+	if err != nil {
+		return err
+	}
+	batch.Shrink(sel)
+	return s.Next.Callback(ctx, batch)
+}
+
 func (s Selection) Schema() (containers.ISchema, error) {
-	return s.Input.Schema()
+	return s.Next.Schema()
 }
 
 func (s Selection) Children() []PhysicalPlan {
-	return []PhysicalPlan{s.Input}
+	return []PhysicalPlan{s.Next}
 }
 
-func (s Selection) Execute(ctx execution.TaskContext) ([]containers.IBatch, error) {
-	input, err := s.Input.Execute(ctx)
-	if err != nil {
-		return nil, err
-	}
-	for i, batch := range input {
-		sel, err := s.Filter.Evaluate(batch)
-		if err != nil {
-			return nil, err
-		}
-		input[i].Shrink(sel)
-	}
-	return input, nil
+func (s Selection) Execute(ctx execution.TaskContext, callback datasource.Callback) error {
+	panic("error in Selection Execute")
 }

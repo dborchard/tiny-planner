@@ -7,6 +7,7 @@ require (
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/parquet-go/parquet-go v0.20.0
 	github.com/stretchr/testify v1.8.4
+	golang.org/x/sync v0.1.0
 )
 
 require (

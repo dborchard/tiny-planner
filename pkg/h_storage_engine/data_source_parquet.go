@@ -1,9 +1,11 @@
 package datasource
 
 import (
+	"context"
 	"fmt"
 	"github.com/apache/arrow/go/v12/arrow"
 	"github.com/parquet-go/parquet-go"
+	"golang.org/x/sync/errgroup"
 	"io"
 	"os"
 	execution "tiny_planner/pkg/g_exec_runtime"
@@ -13,6 +15,11 @@ import (
 type ParquetDataSource struct {
 	Filename string
 	Sch      containers.ISchema
+}
+
+func (ds *ParquetDataSource) View(ctx context.Context, fn func(ctx context.Context, tx uint64) error) error {
+	tx := uint64(0) // TODO: this is timestamp
+	return fn(ctx, tx)
 }
 
 func (ds *ParquetDataSource) Schema() (containers.ISchema, error) {
@@ -47,29 +54,55 @@ func (ds *ParquetDataSource) loadAndCacheSchema() (containers.ISchema, error) {
 	return schema, nil
 }
 
-func (ds *ParquetDataSource) Iterator(projection []string, ctx execution.TaskContext) ([]containers.IBatch, error) {
+func (ds *ParquetDataSource) Iterator(projection []string, tCtx execution.TaskContext, callbacks []Callback) error {
 	pf, f, err := openParquetFile(ds.Filename)
-	defer f.Close()
 	if err != nil {
-		return nil, err
+		return err
+	}
+	defer f.Close()
+
+	rowGroups := make(chan parquet.RowGroup, len(callbacks))
+
+	errG, ctx := errgroup.WithContext(tCtx.Ctx)
+	for _, callback := range callbacks {
+		callback := callback
+		errG.Go(func() error {
+			for {
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				case rg := <-rowGroups:
+					var vectors []containers.IVector
+					schema := rg.Schema()
+					for c, colDef := range schema.Fields() {
+						if !parquetColumnIn(colDef, projection) {
+							continue
+						}
+						vector, err := parquetColumnToVector(colDef, rg.ColumnChunks()[c])
+						if err != nil {
+							return err
+						}
+						vectors = append(vectors, vector)
+					}
+					batch := containers.NewBatch(ds.Sch, vectors)
+					err := callback(ctx, batch)
+					if err != nil {
+						return err
+					}
+				}
+			}
+		})
 	}
 
-	var vectors []containers.IVector
-	for _, rg := range pf.RowGroups() {
-		schema := rg.Schema()
-		for c, colDef := range schema.Fields() {
-			if !parquetColumnIn(colDef, projection) {
-				continue
-			}
-			vector, err := parquetColumnToVector(colDef, rg.ColumnChunks()[c])
-			if err != nil {
-				return nil, err
-			}
-			vectors = append(vectors, vector)
+	errG.Go(func() error {
+		for _, rg := range pf.RowGroups() {
+			rowGroups <- rg
 		}
-	}
+		close(rowGroups)
+		return nil
+	})
 
-	return []containers.IBatch{containers.NewBatch(ds.Sch, vectors)}, nil
+	return errG.Wait()
 }
 
 func parquetColumnToVector(colDef parquet.Field, col parquet.ColumnChunk) (containers.IVector, error) {

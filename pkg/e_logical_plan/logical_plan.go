@@ -53,14 +53,14 @@ func (s Scan) String() string {
 // ----------- Projection -------------
 
 type Projection struct {
-	Input LogicalPlan
-	Proj  []Expr
+	Next LogicalPlan
+	Proj []Expr
 }
 
 func (p Projection) Schema() (containers.ISchema, error) {
 	var fields []arrow.Field
 	for _, e := range p.Proj {
-		used, err := e.ColumnsUsed(p.Input)
+		used, err := e.ColumnsUsed(p.Next)
 		if err != nil {
 			return nil, err
 		}
@@ -70,7 +70,7 @@ func (p Projection) Schema() (containers.ISchema, error) {
 }
 
 func (p Projection) Children() []LogicalPlan {
-	return []LogicalPlan{p.Input}
+	return []LogicalPlan{p.Next}
 }
 
 func (p Projection) String() string {
@@ -85,16 +85,16 @@ func (p Projection) String() string {
 // ----------- Selection -------------
 
 type Selection struct {
-	Input  LogicalPlan
+	Next   LogicalPlan
 	Filter Expr
 }
 
 func (s Selection) Schema() (containers.ISchema, error) {
-	return s.Input.Schema()
+	return s.Next.Schema()
 }
 
 func (s Selection) Children() []LogicalPlan {
-	return []LogicalPlan{s.Input}
+	return []LogicalPlan{s.Next}
 }
 
 func (s Selection) String() string {
