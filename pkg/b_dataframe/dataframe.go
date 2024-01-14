@@ -39,6 +39,7 @@ func (df *DataFrame) Scan(path string, source datasource.TableReader, proj []str
 }
 
 func (df *DataFrame) Project(proj ...logicalplan.Expr) IDataFrame {
+	//TODO: Fix builder pattern
 	df.planBuilder = df.planBuilder.Project(proj...)
 	return df
 }
