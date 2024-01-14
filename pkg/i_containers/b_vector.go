@@ -20,7 +20,7 @@ var _ IVector = Vector{}
 
 // -----------------ConstVector------------------
 
-func NewConstVector(arrowType arrow.DataType, value any, size int) ConstVector {
+func NewConstVector(arrowType arrow.DataType, size int, value any) ConstVector {
 	return ConstVector{
 		ArrowType: arrowType,
 		Value:     value,

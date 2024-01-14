@@ -16,20 +16,20 @@ var _ Expr = ColumnExpression{}
 var _ Expr = LiteralInt64Expression{}
 var _ Expr = LiteralFloat64Expression{}
 var _ Expr = LiteralStringExpression{}
-var _ Expr = BinaryExpression{}
+var _ Expr = BooleanBinaryExpr{}
 
 // ----------- ColumnExpression -------------
 
 type ColumnExpression struct {
-	I int
+	Index int
 }
 
 func (col ColumnExpression) Evaluate(input containers.Batch) (containers.IVector, error) {
-	return input.Column(col.I), nil
+	return input.Column(col.Index), nil
 }
 
 func (col ColumnExpression) String() string {
-	return "#" + strconv.Itoa(col.I)
+	return "#" + strconv.Itoa(col.Index)
 }
 
 // ----------- LiteralInt64Expression -------------
@@ -43,7 +43,7 @@ func (lit LiteralInt64Expression) String() string {
 }
 
 func (lit LiteralInt64Expression) Evaluate(input containers.Batch) (containers.IVector, error) {
-	return containers.ConstVector{ArrowType: arrow.PrimitiveTypes.Int64, Value: lit.Value, Size: input.RowCount()}, nil
+	return containers.NewConstVector(arrow.PrimitiveTypes.Int64, input.RowCount(), lit.Value), nil
 }
 
 // ----------- LiteralFloat64Expression -------------
@@ -57,7 +57,7 @@ func (lit LiteralFloat64Expression) String() string {
 }
 
 func (lit LiteralFloat64Expression) Evaluate(input containers.Batch) (containers.IVector, error) {
-	return containers.ConstVector{ArrowType: arrow.PrimitiveTypes.Float64, Value: lit.Value, Size: input.RowCount()}, nil
+	return containers.NewConstVector(arrow.PrimitiveTypes.Float64, input.RowCount(), lit.Value), nil
 }
 
 // ----------- LiteralStringExpression -------------
@@ -67,48 +67,58 @@ type LiteralStringExpression struct {
 }
 
 func (lit LiteralStringExpression) Evaluate(input containers.Batch) (containers.IVector, error) {
-	return containers.ConstVector{ArrowType: arrow.BinaryTypes.String, Value: lit.Value, Size: input.RowCount()}, nil
+	return containers.NewConstVector(arrow.BinaryTypes.String, input.RowCount(), lit.Value), nil
 }
 
 func (lit LiteralStringExpression) String() string {
 	return fmt.Sprintf("'%s'", lit.Value)
 }
 
-// ----------- BinaryExpression -------------
+// ----------- BooleanBinaryExpr -------------
 
-type BinaryExpression struct {
-	l Expr
-	r Expr
-	BinaryExpressionEvaluator
+type BooleanBinaryExpr struct {
+	L  Expr
+	Op string
+	R  Expr
 }
 
-type BinaryExpressionEvaluator interface {
-	Evaluate(input containers.Batch) containers.IVector
-	evaluate(l, r containers.IVector) containers.IVector
-}
-
-func (e BinaryExpression) Evaluate(input containers.Batch) (containers.IVector, error) {
-	ll, err := e.l.Evaluate(input)
+func (e BooleanBinaryExpr) Evaluate(input containers.Batch) (containers.IVector, error) {
+	ll, err := e.L.Evaluate(input)
 	if err != nil {
 		return nil, err
 	}
-	rr, err := e.r.Evaluate(input)
+	rr, err := e.R.Evaluate(input)
 	if err != nil {
 		return nil, err
 	}
+
 	if ll.Len() != rr.Len() {
 		return nil, fmt.Errorf("binary expression operands do not have the same length")
 	}
 	if ll.DataType() != rr.DataType() {
 		return nil, fmt.Errorf("binary expression operands do not have the same type")
 	}
+
 	return e.evaluate(ll, rr)
 }
 
-func (e BinaryExpression) evaluate(l, r containers.IVector) (containers.IVector, error) {
-	return e.BinaryExpressionEvaluator.evaluate(l, r), nil
+func (e BooleanBinaryExpr) evaluate(l, r containers.IVector) (containers.IVector, error) {
+	res := make([]any, 0)
+	switch e.Op {
+	case "=":
+		for i := 0; i < l.Len(); i++ {
+			if l.GetValue(i) == r.GetValue(i) {
+				res = append(res, true)
+			} else {
+				res = append(res, false)
+			}
+		}
+		return containers.NewVector(arrow.FixedWidthTypes.Boolean, len(res), res), nil
+	default:
+		return nil, fmt.Errorf("unknown binary operator: %s", e.Op)
+	}
 }
 
-func (e BinaryExpression) String() string {
-	return e.l.String() + "+" + e.r.String()
+func (e BooleanBinaryExpr) String() string {
+	return e.L.String() + "+" + e.R.String()
 }

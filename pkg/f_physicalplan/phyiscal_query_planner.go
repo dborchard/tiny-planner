@@ -17,15 +17,23 @@ type DefaultQueryPlanner struct {
 func (d DefaultQueryPlanner) CreatePhyExpr(e logicalplan.Expr, schema containers.ISchema) (Expr, error) {
 	switch v := e.(type) {
 	case logicalplan.Column:
-		return ColumnExpression{I: schema.IndexOf(v.Name)}, nil
+		return ColumnExpression{Index: schema.IndexOf(v.Name)}, nil
 	case logicalplan.LiteralInt64:
 		return LiteralInt64Expression{Value: v.Val}, nil
 	case logicalplan.LiteralFloat64:
 		return LiteralFloat64Expression{Value: v.Val}, nil
 	case logicalplan.LiteralString:
 		return LiteralStringExpression{Value: v.Val}, nil
-	case logicalplan.BoolBinaryExpr:
-		return nil, errors.New("not implemented")
+	case logicalplan.BooleanBinaryExpr:
+		l, err := d.CreatePhyExpr(v.L, schema)
+		if err != nil {
+			return nil, err
+		}
+		r, err := d.CreatePhyExpr(v.R, schema)
+		if err != nil {
+			return nil, err
+		}
+		return BooleanBinaryExpr{L: l, R: r, Op: v.Op}, nil
 	default:
 		return nil, errors.New("not implemented")
 	}

@@ -21,7 +21,7 @@ func NewContext() *ExecContext {
 	}
 }
 
-func (c *ExecContext) ReadCsv(path string, options datasource.CsvReadOptions) (dataframe.IDataFrame, error) {
+func (c *ExecContext) ReadCsv(path string, options datasource.CsvReadOptions) dataframe.IDataFrame {
 	src := datasource.CsvDataSource{
 		Filename:   path,
 		HasHeaders: options.HasHeader,
@@ -32,7 +32,7 @@ func (c *ExecContext) ReadCsv(path string, options datasource.CsvReadOptions) (d
 	return df.Scan(path, &src, nil)
 }
 
-func (c *ExecContext) ReadParquet(path string) (dataframe.IDataFrame, error) {
+func (c *ExecContext) ReadParquet(path string) dataframe.IDataFrame {
 	src := datasource.ParquetDataSource{
 		Filename: path,
 	}

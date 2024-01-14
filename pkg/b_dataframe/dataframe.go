@@ -11,9 +11,9 @@ import (
 )
 
 type IDataFrame interface {
-	Project(expr ...logicalplan.Expr) (IDataFrame, error)
-	Filter(expr logicalplan.Expr) (IDataFrame, error)
-	Aggregate(groupBy []logicalplan.Expr, aggregateExpr []logicalplan.AggregateExpr) (IDataFrame, error)
+	Project(expr ...logicalplan.Expr) IDataFrame
+	Filter(expr logicalplan.Expr) IDataFrame
+	Aggregate(groupBy []logicalplan.Expr, aggregateExpr []logicalplan.AggregateExpr) IDataFrame
 
 	Schema() (containers.ISchema, error)
 	Collect() ([]containers.Batch, error)
@@ -32,36 +32,36 @@ func NewDataFrame(sessionState phyiscalplan.ExecState) *DataFrame {
 	return &DataFrame{sessionState: sessionState}
 }
 
-func (df *DataFrame) Scan(path string, source datasource.DataSource, proj []string) (IDataFrame, error) {
+func (df *DataFrame) Scan(path string, source datasource.DataSource, proj []string) IDataFrame {
 	newPlan, err := logicalplan.NewBuilder().Scan(path, source, proj).Build()
 	if err != nil {
-		return nil, err
+		return nil
 	}
-	return &DataFrame{plan: newPlan, sessionState: df.sessionState}, nil
+	return &DataFrame{plan: newPlan, sessionState: df.sessionState}
 }
 
-func (df *DataFrame) Project(proj ...logicalplan.Expr) (IDataFrame, error) {
+func (df *DataFrame) Project(proj ...logicalplan.Expr) IDataFrame {
 	newPlan, err := logicalplan.From(df.plan).Project(proj...).Build()
 	if err != nil {
-		return nil, err
+		return nil
 	}
-	return &DataFrame{plan: newPlan, sessionState: df.sessionState}, nil
+	return &DataFrame{plan: newPlan, sessionState: df.sessionState}
 }
 
-func (df *DataFrame) Filter(predicate logicalplan.Expr) (IDataFrame, error) {
+func (df *DataFrame) Filter(predicate logicalplan.Expr) IDataFrame {
 	newPlan, err := logicalplan.From(df.plan).Filter(predicate).Build()
 	if err != nil {
-		return nil, err
+		return nil
 	}
-	return &DataFrame{plan: newPlan, sessionState: df.sessionState}, nil
+	return &DataFrame{plan: newPlan, sessionState: df.sessionState}
 }
 
-func (df *DataFrame) Aggregate(groupBy []logicalplan.Expr, aggExpr []logicalplan.AggregateExpr) (IDataFrame, error) {
+func (df *DataFrame) Aggregate(groupBy []logicalplan.Expr, aggExpr []logicalplan.AggregateExpr) IDataFrame {
 	newPlan, err := logicalplan.From(df.plan).Aggregate(groupBy, aggExpr).Build()
 	if err != nil {
-		return nil, err
+		return nil
 	}
-	return &DataFrame{plan: newPlan, sessionState: df.sessionState}, nil
+	return &DataFrame{plan: newPlan, sessionState: df.sessionState}
 }
 
 func (df *DataFrame) TaskContext() execution.TaskContext {

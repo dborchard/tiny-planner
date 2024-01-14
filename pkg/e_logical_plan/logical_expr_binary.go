@@ -8,39 +8,39 @@ import (
 
 // ---------- Comparison ----------
 
-func Eq(l Expr, r Expr) BoolBinaryExpr {
-	return BoolBinaryExpr{"eq", "=", l, r}
+func Eq(l Expr, r Expr) BooleanBinaryExpr {
+	return BooleanBinaryExpr{"eq", "=", l, r}
 }
-func Neq(l Expr, r Expr) BoolBinaryExpr {
-	return BoolBinaryExpr{"neq", "!=", l, r}
+func Neq(l Expr, r Expr) BooleanBinaryExpr {
+	return BooleanBinaryExpr{"neq", "!=", l, r}
 }
-func Gt(l Expr, r Expr) BoolBinaryExpr {
-	return BoolBinaryExpr{"gt", ">", l, r}
+func Gt(l Expr, r Expr) BooleanBinaryExpr {
+	return BooleanBinaryExpr{"gt", ">", l, r}
 }
-func GtEq(l Expr, r Expr) BoolBinaryExpr {
-	return BoolBinaryExpr{"gteq", ">=", l, r}
+func GtEq(l Expr, r Expr) BooleanBinaryExpr {
+	return BooleanBinaryExpr{"gteq", ">=", l, r}
 }
-func Lt(l Expr, r Expr) BoolBinaryExpr {
-	return BoolBinaryExpr{"lt", "<", l, r}
+func Lt(l Expr, r Expr) BooleanBinaryExpr {
+	return BooleanBinaryExpr{"lt", "<", l, r}
 }
-func LtEq(l Expr, r Expr) BoolBinaryExpr {
-	return BoolBinaryExpr{"lteq", "<=", l, r}
+func LtEq(l Expr, r Expr) BooleanBinaryExpr {
+	return BooleanBinaryExpr{"lteq", "<=", l, r}
 }
 
-// ---------- BoolBinaryExpr ----------
+// ---------- BooleanBinaryExpr ----------
 
-type BoolBinaryExpr struct {
+type BooleanBinaryExpr struct {
 	Name string
 	Op   string
 	L    Expr
 	R    Expr
 }
 
-func (be BoolBinaryExpr) DataType(schema containers.ISchema) (arrow.DataType, error) {
+func (be BooleanBinaryExpr) DataType(schema containers.ISchema) (arrow.DataType, error) {
 	return arrow.FixedWidthTypes.Boolean, nil
 }
 
-func (be BoolBinaryExpr) ColumnsUsed(input LogicalPlan) ([]arrow.Field, error) {
+func (be BooleanBinaryExpr) ColumnsUsed(input LogicalPlan) ([]arrow.Field, error) {
 	l, err := be.L.ColumnsUsed(input)
 	if err != nil {
 		return nil, err
@@ -51,15 +51,15 @@ func (be BoolBinaryExpr) ColumnsUsed(input LogicalPlan) ([]arrow.Field, error) {
 	}
 	return append(l, r...), nil
 }
-func (be BoolBinaryExpr) String() string {
+func (be BooleanBinaryExpr) String() string {
 	return be.L.String() + " " + be.Op + " " + be.R.String()
 }
 
-func And(l Expr, r Expr) BoolBinaryExpr {
-	return BoolBinaryExpr{"and", "AND", l, r}
+func And(l Expr, r Expr) BooleanBinaryExpr {
+	return BooleanBinaryExpr{"and", "AND", l, r}
 }
-func Or(l Expr, r Expr) BoolBinaryExpr {
-	return BoolBinaryExpr{"or", "OR", l, r}
+func Or(l Expr, r Expr) BooleanBinaryExpr {
+	return BooleanBinaryExpr{"or", "OR", l, r}
 }
 
 // ---------- MathExpr ----------

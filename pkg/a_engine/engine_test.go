@@ -9,11 +9,11 @@ import (
 
 func TestCsvFile(t *testing.T) {
 	ctx := NewContext()
-	df, _ := ctx.ReadCsv("../../test/data/aggregate_test_100.csv", datasource.CsvReadOptions{HasHeader: true})
+	df := ctx.ReadCsv("../../test/data/aggregate_test_100.csv", datasource.CsvReadOptions{HasHeader: true})
 
 	//TODO: ability to pass custom schema
 
-	df, _ = df.
+	df = df.
 		//Filter(logicalplan.Eq(logicalplan.Column{Name: "state"}, logicalplan.LiteralString{Val: "CO"})).
 		Project(
 			logicalplan.Column{Name: "c1"},
@@ -28,14 +28,17 @@ func TestCsvFile(t *testing.T) {
 
 func TestParquetFile(t *testing.T) {
 	ctx := NewContext()
-	df, _ := ctx.ReadParquet("../../test/data/c1_c2_int32.parquet")
+	df := ctx.ReadParquet("../../test/data/c1_c2_int64.parquet")
 
-	df, _ = df.
-		//Filter(logicalplan.Eq(logicalplan.Column{Name: "state"}, logicalplan.LiteralString{Val: "CO"})).
+	df = df.
 		Project(
 			logicalplan.Column{Name: "c1"},
 			logicalplan.Column{Name: "c2"},
-		)
+		).
+		Filter(logicalplan.Eq(
+			logicalplan.Column{Name: "c1"},
+			logicalplan.LiteralInt64{Val: 100},
+		))
 
 	logicalPlan, _ := df.LogicalPlan()
 	fmt.Println(logicalplan.PrettyPrint(logicalPlan, 0))

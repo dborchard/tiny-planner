@@ -16,7 +16,7 @@ type Expr interface {
 var _ Expr = Column{}
 var _ Expr = Alias{}
 
-var _ Expr = BoolBinaryExpr{}
+var _ Expr = BooleanBinaryExpr{}
 var _ Expr = MathExpr{}
 var _ Expr = AggregateExpr{}
 
