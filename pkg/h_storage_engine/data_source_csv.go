@@ -63,7 +63,7 @@ func (ds *CsvDataSource) Scan(proj []string, ctx execution.TaskContext) ([]conta
 
 	var vectors []containers.IVector
 	for _, col := range cols {
-		vectors = append(vectors, containers.NewVector(arrow.BinaryTypes.String, len(col), col))
+		vectors = append(vectors, containers.NewVector(arrow.BinaryTypes.String, col))
 	}
 
 	return []containers.Batch{{ds.Sch, vectors}}, nil

@@ -62,94 +62,29 @@ func (c ConstVector) Shrink(sel IVector) IVector {
 			filteredCol = append(filteredCol, c.GetValue(i))
 		}
 	}
-	return NewVector(c.DataType(), len(filteredCol), filteredCol)
+	return NewVector(c.DataType(), filteredCol)
 }
 
 // -----------------Vector------------------
 
 type Vector struct {
-	dtype       arrow.DataType
-	boolData    *array.Boolean
-	int8Data    *array.Int8
-	int16Data   *array.Int16
-	int32Data   *array.Int32
-	int64Data   *array.Int64
-	float32Data *array.Float32
-	float64Data *array.Float64
-	stringData  *array.String
+	src arrow.Array
 }
 
 func (v Vector) String() string {
-	switch v.dtype.(type) {
-	case *arrow.BooleanType:
-		return v.boolData.String()
-	case *arrow.Int8Type:
-		return v.int8Data.String()
-	case *arrow.Int16Type:
-		return v.int16Data.String()
-	case *arrow.Int32Type:
-		return v.int32Data.String()
-	case *arrow.Int64Type:
-		return v.int64Data.String()
-	case *arrow.Float32Type:
-		return v.float32Data.String()
-	case *arrow.Float64Type:
-		return v.float64Data.String()
-	case *arrow.StringType:
-		return v.stringData.String()
-	default:
-		panic("Unsupported Arrow type")
-	}
+	return v.src.String()
 }
 
 func (v Vector) Len() int {
-	switch v.dtype.(type) {
-	case *arrow.BooleanType:
-		return v.boolData.Len()
-	case *arrow.Int8Type:
-		return v.int8Data.Len()
-	case *arrow.Int16Type:
-		return v.int16Data.Len()
-	case *arrow.Int32Type:
-		return v.int32Data.Len()
-	case *arrow.Int64Type:
-		return v.int64Data.Len()
-	case *arrow.Float32Type:
-		return v.float32Data.Len()
-	case *arrow.Float64Type:
-		return v.float64Data.Len()
-	case *arrow.StringType:
-		return v.stringData.Len()
-	default:
-		panic("Unsupported Arrow type")
-	}
+	return v.src.Len()
 }
 
 func (v Vector) GetValue(i int) any {
-	switch v.dtype.(type) {
-	case *arrow.BooleanType:
-		return v.boolData.Value(i)
-	case *arrow.Int8Type:
-		return v.int8Data.Value(i)
-	case *arrow.Int16Type:
-		return v.int16Data.Value(i)
-	case *arrow.Int32Type:
-		return v.int32Data.Value(i)
-	case *arrow.Int64Type:
-		return v.int64Data.Value(i)
-	case *arrow.Float32Type:
-		return v.float32Data.Value(i)
-	case *arrow.Float64Type:
-		return v.float64Data.Value(i)
-	case *arrow.StringType:
-		return v.stringData.Value(i)
-	default:
-		panic("Unsupported Arrow type")
-	}
+	return v.src.GetOneForMarshal(i)
 }
 
 func (v Vector) DataType() arrow.DataType {
-	return v.dtype
+	return v.src.DataType()
 }
 
 func (v Vector) Shrink(sel IVector) IVector {
@@ -159,71 +94,55 @@ func (v Vector) Shrink(sel IVector) IVector {
 			filteredCol = append(filteredCol, v.GetValue(i))
 		}
 	}
-	return NewVector(v.DataType(), len(filteredCol), filteredCol)
+	return NewVector(v.DataType(), filteredCol)
 }
 
-func NewVector(arrowType arrow.DataType, initialCapacity int, data []any) Vector {
-	rootAllocator := memory.NewGoAllocator()
-	out := Vector{dtype: arrowType}
+func NewVector(arrowType arrow.DataType, data []any) Vector {
+	allocator := memory.NewGoAllocator()
+	builder := array.NewBuilder(allocator, arrowType)
+	defer builder.Release()
+
 	switch arrowType.(type) {
-	case *arrow.BooleanType:
-		vs := array.NewBooleanBuilder(rootAllocator)
-		vs.Reserve(initialCapacity)
-		for _, v := range data {
-			vs.Append(v.(bool))
-		}
-		out.boolData = vs.NewBooleanArray()
-	case *arrow.Int8Type:
-		vs := array.NewInt8Builder(rootAllocator)
-		vs.Reserve(initialCapacity)
-		for _, v := range data {
-			vs.Append(v.(int8))
-		}
-		out.int8Data = vs.NewInt8Array()
-	case *arrow.Int16Type:
-		vs := array.NewInt16Builder(rootAllocator)
-		vs.Reserve(initialCapacity)
-		for _, v := range data {
-			vs.Append(v.(int16))
-		}
-		out.int16Data = vs.NewInt16Array()
-	case *arrow.Int32Type:
-		vs := array.NewInt32Builder(rootAllocator)
-		vs.Reserve(initialCapacity)
-		for _, v := range data {
-			vs.Append(v.(int32))
-		}
-		out.int32Data = vs.NewInt32Array()
 	case *arrow.Int64Type:
-		vs := array.NewInt64Builder(rootAllocator)
-		vs.Reserve(initialCapacity)
-		for _, v := range data {
-			vs.Append(v.(int64))
+		intBuilder := builder.(*array.Int64Builder)
+		for _, value := range data {
+			v, ok := value.(int64)
+			if !ok {
+				panic("unsupported type")
+			}
+			intBuilder.Append(v)
 		}
-		out.int64Data = vs.NewInt64Array()
-	case *arrow.Float32Type:
-		vs := array.NewFloat32Builder(rootAllocator)
-		vs.Reserve(initialCapacity)
-		for _, v := range data {
-			vs.Append(v.(float32))
-		}
-		out.float32Data = vs.NewFloat32Array()
 	case *arrow.Float64Type:
-		vs := array.NewFloat64Builder(rootAllocator)
-		vs.Reserve(initialCapacity)
-		for _, v := range data {
-			vs.Append(v.(float64))
+		floatBuilder := builder.(*array.Float64Builder)
+		for _, value := range data {
+			v, ok := value.(float64)
+			if !ok {
+				panic("unsupported type")
+			}
+			floatBuilder.Append(v)
 		}
-		out.float64Data = vs.NewFloat64Array()
+	case *arrow.BooleanType:
+		boolBuilder := builder.(*array.BooleanBuilder)
+		for _, value := range data {
+			v, ok := value.(bool)
+			if !ok {
+				panic("unsupported type")
+			}
+			boolBuilder.Append(v)
+		}
 	case *arrow.StringType:
-		vs := array.NewStringBuilder(rootAllocator)
-		vs.Reserve(initialCapacity)
-		for _, v := range data {
-			vs.Append(v.(string))
+		stringBuilder := builder.(*array.StringBuilder)
+		for _, value := range data {
+			v, ok := value.(string)
+			if !ok {
+				panic("unsupported type")
+			}
+			stringBuilder.Append(v)
 		}
-		out.stringData = vs.NewStringArray()
 	default:
-		panic("Unsupported Arrow type")
+		panic("unsupported type")
 	}
-	return out
+
+	dataArr := builder.NewArray()
+	return Vector{src: dataArr}
 }

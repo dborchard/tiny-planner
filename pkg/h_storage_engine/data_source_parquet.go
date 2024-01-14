@@ -106,7 +106,7 @@ func parquetColumnToVector(colDef parquet.Field, col parquet.ColumnChunk) (conta
 			return nil, fmt.Errorf("unsupported type %s", colDef.Type().Kind())
 		}
 	}
-	return containers.NewVector(colType, len(colData), colData), nil
+	return containers.NewVector(colType, colData), nil
 }
 
 func parquetColumnIn(columnDef parquet.Field, projections []string) bool {

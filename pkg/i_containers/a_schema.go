@@ -9,8 +9,10 @@ type ISchema interface {
 	Fields() []arrow.Field
 }
 
+var _ ISchema = Schema{}
+
 type Schema struct {
-	*arrow.Schema
+	src *arrow.Schema
 }
 
 func NewSchema(fields []arrow.Field, metadata *arrow.Metadata) Schema {
@@ -18,22 +20,32 @@ func NewSchema(fields []arrow.Field, metadata *arrow.Metadata) Schema {
 }
 
 func (s Schema) Select(projection []string) (ISchema, error) {
-	fields := make([]arrow.Field, 0)
-	for _, columnName := range projection {
-		field, ok := s.FieldsByName(columnName)
-		if ok {
-			fields = append(fields, field...)
+	subFields := make([]arrow.Field, 0)
+	for _, field := range s.src.Fields() {
+		for _, columnName := range projection {
+			if field.Name == columnName {
+				subFields = append(subFields, field)
+				break
+			}
 		}
 	}
-	newSchema := arrow.NewSchema(fields, nil)
+	newSchema := arrow.NewSchema(subFields, nil)
 	return Schema{newSchema}, nil
 }
 
-func (s Schema) IndexOf(name string) int {
+func (s Schema) IndexOf(columnName string) int {
 	for i, field := range s.Fields() {
-		if field.Name == name {
+		if field.Name == columnName {
 			return i
 		}
 	}
 	return -1
+}
+
+func (s Schema) String() string {
+	return s.src.String()
+}
+
+func (s Schema) Fields() []arrow.Field {
+	return s.src.Fields()
 }

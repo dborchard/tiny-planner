@@ -113,7 +113,7 @@ func (e BooleanBinaryExpr) evaluate(l, r containers.IVector) (containers.IVector
 				res = append(res, false)
 			}
 		}
-		return containers.NewVector(arrow.FixedWidthTypes.Boolean, len(res), res), nil
+		return containers.NewVector(arrow.FixedWidthTypes.Boolean, res), nil
 	default:
 		return nil, fmt.Errorf("unknown binary operator: %s", e.Op)
 	}
