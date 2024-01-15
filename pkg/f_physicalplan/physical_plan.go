@@ -61,7 +61,7 @@ func (s *Scan) Execute(ctx execution.TaskContext, callback datasource.Callback) 
 }
 
 func (s *Scan) Children() []PhysicalPlan {
-	return nil
+	return []PhysicalPlan{s.Next}
 }
 
 func (s *Scan) String() string {

@@ -40,67 +40,39 @@ func (d DefaultQueryPlanner) CreatePhyExpr(e logicalplan.Expr, schema containers
 }
 
 func (d DefaultQueryPlanner) CreatePhyPlan(lp logicalplan.LogicalPlan, state ExecState) (PhysicalPlan, error) {
-	switch lp.(type) {
-	case logicalplan.Scan:
-		return d.createScan(lp.(logicalplan.Scan), state)
-	case logicalplan.Projection:
-		return d.createProjection(lp.(logicalplan.Projection), state)
-	case logicalplan.Selection:
-		return d.createSelection(lp.(logicalplan.Selection), state)
-	case logicalplan.Aggregate:
-		return d.createAggregate(lp.(logicalplan.Aggregate), state)
-	default:
-		return nil, errors.New("not implemented")
-	}
-}
+	var visitErr error
+	var pPlan PhysicalPlan
+	var prev PhysicalPlan
+	lp.Accept(PostPlanVisitorFunc(func(plan logicalplan.LogicalPlan) bool {
+		switch lPlan := plan.(type) {
+		case logicalplan.Scan:
+			pPlan = &Scan{Source: lPlan.Source, Projection: lPlan.Projection}
+			prev = pPlan
+		case logicalplan.Projection:
+			proj := make([]Expr, len(lPlan.Proj))
+			for i, e := range lPlan.Proj {
+				schema, _ := prev.Schema()
+				proj[i], _ = d.CreatePhyExpr(e, schema)
+			}
+			schema, _ := lPlan.Schema()
 
-func (d DefaultQueryPlanner) createScan(scan logicalplan.Scan, state ExecState) (PhysicalPlan, error) {
-	return Scan{Source: scan.Source, Projection: scan.Projection}, nil
-}
+			projection := &Projection{Proj: proj, Sch: schema}
+			prev = projection
 
-func (d DefaultQueryPlanner) createProjection(projection logicalplan.Projection, state ExecState) (PhysicalPlan, error) {
-	next, err := d.CreatePhyPlan(projection.Next, state)
+			pPlan.SetNext(projection)
+		case logicalplan.Selection:
+			schema, _ := prev.Schema()
+			filterExpr, _ := d.CreatePhyExpr(lPlan.Filter, schema)
 
-	if err != nil {
-		return nil, err
-	}
+			selection := &Selection{Filter: filterExpr}
+			prev = selection
 
-	proj := make([]Expr, len(projection.Proj))
-	for i, e := range projection.Proj {
-		schema, err := next.Schema()
-		if err != nil {
-			return nil, err
+			pPlan.SetNext(selection)
+		default:
+			visitErr = errors.New("not implemented")
 		}
-		proj[i], err = d.CreatePhyExpr(e, schema)
-		if err != nil {
-			return nil, err
-		}
-	}
+		return visitErr == nil
+	}))
 
-	schema, err := projection.Schema()
-	if err != nil {
-		return nil, err
-	}
-	return Projection{Next: next, Proj: proj, Sch: schema}, nil
-}
-
-func (d DefaultQueryPlanner) createSelection(selection logicalplan.Selection, state ExecState) (PhysicalPlan, error) {
-	input, err := d.CreatePhyPlan(selection.Next, state)
-	if err != nil {
-		return nil, err
-	}
-	schema, err := input.Schema()
-	if err != nil {
-		return nil, err
-	}
-
-	filterExpr, err := d.CreatePhyExpr(selection.Filter, schema)
-	if err != nil {
-		return nil, err
-	}
-	return Selection{Next: input, Filter: filterExpr}, nil
-}
-
-func (d DefaultQueryPlanner) createAggregate(aggregate logicalplan.Aggregate, state ExecState) (PhysicalPlan, error) {
-	return nil, errors.New("not implemented")
+	return pPlan, visitErr
 }
