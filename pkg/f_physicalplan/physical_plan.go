@@ -20,6 +20,7 @@ type PhysicalPlan interface {
 var _ PhysicalPlan = &Scan{}
 var _ PhysicalPlan = &Projection{}
 var _ PhysicalPlan = &Selection{}
+var _ PhysicalPlan = &Out{}
 
 //----------------- Scan -----------------
 
@@ -50,7 +51,7 @@ func (s *Scan) Schema() (containers.ISchema, error) {
 }
 
 func (s *Scan) Execute(ctx execution.TaskContext, callback datasource.Callback) error {
-	s.callback = callback
+	//s.callback = callback
 
 	callbacks := make([]datasource.Callback, 0, len(s.Children()))
 	for _, plan := range s.Children() {
@@ -142,4 +143,32 @@ func (s *Selection) Children() []PhysicalPlan {
 
 func (s *Selection) Execute(ctx execution.TaskContext, callback datasource.Callback) error {
 	panic("error in Selection Execute")
+}
+
+// --------
+
+type Out struct {
+	CallbackPtr datasource.Callback
+	Scan        PhysicalPlan
+}
+
+func (e Out) Schema() (containers.ISchema, error) {
+	return nil, nil
+}
+
+func (e Out) Children() []PhysicalPlan {
+	return nil
+}
+
+func (e Out) Callback(ctx context.Context, r containers.IBatch) error {
+	return e.CallbackPtr(ctx, r)
+}
+
+func (e Out) Execute(ctx execution.TaskContext, callback datasource.Callback) error {
+	e.CallbackPtr = callback
+	return e.Scan.Execute(ctx, e.CallbackPtr)
+}
+
+func (e Out) SetNext(next PhysicalPlan) {
+	panic("bug")
 }

@@ -47,7 +47,7 @@ func (d DefaultQueryPlanner) CreatePhyPlan(lp logicalplan.LogicalPlan, state Exe
 		switch lPlan := plan.(type) {
 		case logicalplan.Scan:
 			scan := &Scan{Source: lPlan.Source, Projection: lPlan.Projection}
-			start = scan
+			start = &Out{Scan: scan}
 			prev = scan
 		case logicalplan.Projection:
 			proj := make([]Expr, len(lPlan.Proj))
