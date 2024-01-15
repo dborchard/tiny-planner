@@ -12,6 +12,12 @@ type LogicalPlan interface {
 	Schema() (containers.ISchema, error)
 	Children() []LogicalPlan
 	String() string
+	Accept(visitor PlanVisitor) bool
+}
+
+type PlanVisitor interface {
+	PreVisit(plan LogicalPlan) bool
+	PostVisit(plan LogicalPlan) bool
 }
 
 var _ LogicalPlan = Scan{}
@@ -25,6 +31,23 @@ type Scan struct {
 	Path       string
 	Source     datasource.TableReader
 	Projection []string
+}
+
+func (s Scan) Accept(visitor PlanVisitor) bool {
+	kontinue := visitor.PreVisit(s)
+	if !kontinue {
+		return false
+	}
+
+	if len(s.Children()) > 0 {
+		// TODO: we should iterate
+		kontinue = s.Children()[0].Accept(visitor)
+		if !kontinue {
+			return false
+		}
+	}
+
+	return visitor.PostVisit(s)
 }
 
 func (s Scan) Schema() (containers.ISchema, error) {
@@ -55,6 +78,23 @@ func (s Scan) String() string {
 type Projection struct {
 	Next LogicalPlan
 	Proj []Expr
+}
+
+func (p Projection) Accept(visitor PlanVisitor) bool {
+	kontinue := visitor.PreVisit(p)
+	if !kontinue {
+		return false
+	}
+
+	if p.Children() != nil {
+		// TODO: we should iterate
+		kontinue = p.Children()[0].Accept(visitor)
+		if !kontinue {
+			return false
+		}
+	}
+
+	return visitor.PostVisit(p)
 }
 
 func (p Projection) Schema() (containers.ISchema, error) {
@@ -89,6 +129,23 @@ type Selection struct {
 	Filter Expr
 }
 
+func (s Selection) Accept(visitor PlanVisitor) bool {
+	kontinue := visitor.PreVisit(s)
+	if !kontinue {
+		return false
+	}
+
+	if s.Children() != nil {
+		// TODO: we should iterate
+		kontinue = s.Children()[0].Accept(visitor)
+		if !kontinue {
+			return false
+		}
+	}
+
+	return visitor.PostVisit(s)
+}
+
 func (s Selection) Schema() (containers.ISchema, error) {
 	return s.Next.Schema()
 }
@@ -107,6 +164,23 @@ type Aggregate struct {
 	Input         LogicalPlan
 	GroupExpr     []Expr
 	AggregateExpr []AggregateExpr
+}
+
+func (a Aggregate) Accept(visitor PlanVisitor) bool {
+	kontinue := visitor.PreVisit(a)
+	if !kontinue {
+		return false
+	}
+
+	if a.Children() != nil {
+		// TODO: we should iterate
+		kontinue = a.Children()[0].Accept(visitor)
+		if !kontinue {
+			return false
+		}
+	}
+
+	return visitor.PostVisit(a)
 }
 
 func (a Aggregate) Schema() (containers.ISchema, error) {
