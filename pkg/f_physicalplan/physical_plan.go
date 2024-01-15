@@ -17,9 +17,9 @@ type PhysicalPlan interface {
 	SetNext(next PhysicalPlan)
 }
 
-var _ PhysicalPlan = Scan{}
-var _ PhysicalPlan = Projection{}
-var _ PhysicalPlan = Selection{}
+var _ PhysicalPlan = &Scan{}
+var _ PhysicalPlan = &Projection{}
+var _ PhysicalPlan = &Selection{}
 
 //----------------- Scan -----------------
 
@@ -27,17 +27,18 @@ type Scan struct {
 	callback   datasource.Callback
 	Source     datasource.TableReader
 	Projection []string
+	Next       PhysicalPlan
 }
 
-func (s Scan) SetNext(next PhysicalPlan) {
-	panic("bug")
+func (s *Scan) SetNext(next PhysicalPlan) {
+	s.Next = next
 }
 
-func (s Scan) Callback(ctx context.Context, r containers.IBatch) error {
+func (s *Scan) Callback(ctx context.Context, r containers.IBatch) error {
 	return s.callback(ctx, r)
 }
 
-func (s Scan) Schema() (containers.ISchema, error) {
+func (s *Scan) Schema() (containers.ISchema, error) {
 	if len(s.Projection) == 0 {
 		return s.Source.Schema()
 	}
@@ -48,7 +49,7 @@ func (s Scan) Schema() (containers.ISchema, error) {
 	return schema.Select(s.Projection)
 }
 
-func (s Scan) Execute(ctx execution.TaskContext, callback datasource.Callback) error {
+func (s *Scan) Execute(ctx execution.TaskContext, callback datasource.Callback) error {
 	s.callback = callback
 
 	callbacks := make([]datasource.Callback, 0, len(s.Children()))
@@ -59,11 +60,11 @@ func (s Scan) Execute(ctx execution.TaskContext, callback datasource.Callback) e
 	return s.Source.Iterator(s.Projection, ctx, callbacks)
 }
 
-func (s Scan) Children() []PhysicalPlan {
+func (s *Scan) Children() []PhysicalPlan {
 	return nil
 }
 
-func (s Scan) String() string {
+func (s *Scan) String() string {
 	schema, err := s.Schema()
 	if err != nil {
 		panic(err)
@@ -79,11 +80,11 @@ type Projection struct {
 	Proj []Expr
 }
 
-func (p Projection) SetNext(next PhysicalPlan) {
+func (p *Projection) SetNext(next PhysicalPlan) {
 	p.Next = next
 }
 
-func (p Projection) Callback(ctx context.Context, batch containers.IBatch) error {
+func (p *Projection) Callback(ctx context.Context, batch containers.IBatch) error {
 	vectors := make([]containers.IVector, len(p.Proj))
 	var err error
 	for colIdx, expr := range p.Proj {
@@ -95,19 +96,19 @@ func (p Projection) Callback(ctx context.Context, batch containers.IBatch) error
 	return p.Next.Callback(ctx, containers.NewBatch(p.Sch, vectors))
 }
 
-func (p Projection) String() string {
+func (p *Projection) String() string {
 	return fmt.Sprintf("Projection: %s", p.Proj)
 }
 
-func (p Projection) Schema() (containers.ISchema, error) {
+func (p *Projection) Schema() (containers.ISchema, error) {
 	return p.Sch, nil
 }
 
-func (p Projection) Execute(ctx execution.TaskContext, callback datasource.Callback) error {
+func (p *Projection) Execute(ctx execution.TaskContext, callback datasource.Callback) error {
 	panic("error in Projection Execute")
 }
 
-func (p Projection) Children() []PhysicalPlan {
+func (p *Projection) Children() []PhysicalPlan {
 	return []PhysicalPlan{p.Next}
 }
 
@@ -118,11 +119,11 @@ type Selection struct {
 	Filter Expr
 }
 
-func (s Selection) SetNext(next PhysicalPlan) {
+func (s *Selection) SetNext(next PhysicalPlan) {
 	s.Next = next
 }
 
-func (s Selection) Callback(ctx context.Context, batch containers.IBatch) error {
+func (s *Selection) Callback(ctx context.Context, batch containers.IBatch) error {
 	sel, err := s.Filter.Evaluate(batch)
 	if err != nil {
 		return err
@@ -131,14 +132,14 @@ func (s Selection) Callback(ctx context.Context, batch containers.IBatch) error 
 	return s.Next.Callback(ctx, batch)
 }
 
-func (s Selection) Schema() (containers.ISchema, error) {
+func (s *Selection) Schema() (containers.ISchema, error) {
 	return s.Next.Schema()
 }
 
-func (s Selection) Children() []PhysicalPlan {
+func (s *Selection) Children() []PhysicalPlan {
 	return []PhysicalPlan{s.Next}
 }
 
-func (s Selection) Execute(ctx execution.TaskContext, callback datasource.Callback) error {
+func (s *Selection) Execute(ctx execution.TaskContext, callback datasource.Callback) error {
 	panic("error in Selection Execute")
 }
