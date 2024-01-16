@@ -18,7 +18,7 @@ type IDataFrame interface {
 	Aggregate(groupBy []logicalplan.Expr, aggregateExpr []logicalplan.AggregateExpr) IDataFrame
 
 	Schema() (containers.ISchema, error)
-	Execute(ctx context.Context, callback datasource.Callback) error
+	Collect(ctx context.Context, callback datasource.Callback) error
 	Show() error
 
 	LogicalPlan() (logicalplan.LogicalPlan, error)
@@ -55,6 +55,16 @@ func (df *DataFrame) Aggregate(groupBy []logicalplan.Expr, aggExpr []logicalplan
 	return df
 }
 
+func (df *DataFrame) Collect(ctx context.Context, callback datasource.Callback) error {
+	df.planBuilder = df.planBuilder.Out(callback)
+
+	physicalPlan, err := df.PhysicalPlan()
+	if err != nil {
+		return err
+	}
+	return physicalPlan.Execute(df.TaskContext(), callback)
+}
+
 func (df *DataFrame) TaskContext() execution.TaskContext {
 	return df.sessionState.TaskContext()
 }
@@ -71,20 +81,10 @@ func (df *DataFrame) LogicalPlan() (logicalplan.LogicalPlan, error) {
 	return df.planBuilder.Build()
 }
 
-func (df *DataFrame) Execute(ctx context.Context, callback datasource.Callback) error {
-	df.planBuilder = df.planBuilder.Out(callback)
-
-	physicalPlan, err := df.PhysicalPlan()
-	if err != nil {
-		return err
-	}
-	return physicalPlan.Execute(df.TaskContext(), callback)
-}
-
 func (df *DataFrame) Show() error {
 
 	result := make([]containers.IBatch, 0)
-	err := df.Execute(context.TODO(), func(ctx context.Context, r containers.IBatch) error {
+	err := df.Collect(context.TODO(), func(ctx context.Context, r containers.IBatch) error {
 		result = append(result, r)
 		return nil
 	})
