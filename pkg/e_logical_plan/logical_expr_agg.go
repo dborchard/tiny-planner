@@ -13,7 +13,7 @@ type AggregateExpr struct {
 	Expr Expr
 }
 
-func (e AggregateExpr) DataType(schema containers.ISchema) (arrow.DataType, error) {
+func (e AggregateExpr) DataType(schema containers.ISchema) arrow.DataType {
 	return e.Expr.DataType(schema)
 }
 
