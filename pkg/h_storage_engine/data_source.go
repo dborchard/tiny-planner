@@ -17,7 +17,6 @@ type TableReader interface {
 	// Next() containers.Batch
 }
 
-var _ TableReader = &CsvDataSource{}
 var _ TableReader = &ParquetDataSource{}
 
 type Callback func(ctx context.Context, r containers.IBatch) error

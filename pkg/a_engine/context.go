@@ -21,17 +21,6 @@ func NewContext() *ExecContext {
 	}
 }
 
-func (c *ExecContext) Csv(path string, options datasource.CsvReadOptions) dataframe.IDataFrame {
-	src := datasource.CsvDataSource{
-		Filename:   path,
-		HasHeaders: options.HasHeader,
-		BatchSize:  1024,
-	}
-
-	df := dataframe.NewDataFrame(c.State)
-	return df.Scan(path, &src, nil)
-}
-
 func (c *ExecContext) Parquet(path string) dataframe.IDataFrame {
 	src := datasource.ParquetDataSource{
 		Filename: path,
@@ -40,11 +29,3 @@ func (c *ExecContext) Parquet(path string) dataframe.IDataFrame {
 	df := dataframe.NewDataFrame(c.State)
 	return df.Scan(path, &src, nil)
 }
-
-//func (c *ExecContext) RegisterCsv(name string, tablePath string, options datasource.CsvReadOptions) {
-//
-//}
-//
-//func (c *ExecContext) Sql(sql string) dataframe.IDataFrame {
-//	return nil
-//}
