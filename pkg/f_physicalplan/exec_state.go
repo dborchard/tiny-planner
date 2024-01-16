@@ -25,6 +25,15 @@ type ExecState struct {
 
 }
 
+func NewExecState(sessionId string) *ExecState {
+	return &ExecState{
+		SessionID:        sessionId,
+		SessionStartTime: time.Now(),
+		QueryPlanner:     DefaultQueryPlanner{},
+		RuntimeEnv:       execution.NewRuntimeEnv(),
+	}
+}
+
 func (s ExecState) TaskContext() execution.TaskContext {
 	return execution.TaskContext{
 		SessionID: s.SessionID,
