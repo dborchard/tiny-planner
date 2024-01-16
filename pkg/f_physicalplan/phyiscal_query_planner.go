@@ -41,23 +41,23 @@ func (d DefaultQueryPlanner) CreatePhyExpr(e logicalplan.Expr, schema containers
 
 func (d DefaultQueryPlanner) CreatePhyPlan(lp logicalplan.LogicalPlan, state ExecState) (PhysicalPlan, error) {
 	var visitErr error
-	var start PhysicalPlan
+	var source PhysicalPlan
 	var prev PhysicalPlan
 	lp.Accept(PostPlanVisitorFunc(func(plan logicalplan.LogicalPlan) bool {
 		switch lPlan := plan.(type) {
 		case logicalplan.Scan:
 			scan := &Scan{Source: lPlan.Source, Projection: lPlan.Projection}
-			start = &Out{Scan: scan}
+			source = scan
 			prev = scan
 		case logicalplan.Projection:
-			proj := make([]Expr, len(lPlan.Proj))
+			projExpr := make([]Expr, len(lPlan.Proj))
 			for i, e := range lPlan.Proj {
 				schema, _ := prev.Schema()
-				proj[i], _ = d.CreatePhyExpr(e, schema)
+				projExpr[i], _ = d.CreatePhyExpr(e, schema)
 			}
-			schema, _ := lPlan.Schema()
+			projSchema, _ := lPlan.Schema()
 
-			projection := &Projection{Proj: proj, Sch: schema}
+			projection := &Projection{Proj: projExpr, Sch: projSchema}
 			prev.SetNext(projection)
 			prev = projection
 
@@ -80,5 +80,5 @@ func (d DefaultQueryPlanner) CreatePhyPlan(lp logicalplan.LogicalPlan, state Exe
 		return visitErr == nil
 	}))
 
-	return start, visitErr
+	return source, visitErr
 }
