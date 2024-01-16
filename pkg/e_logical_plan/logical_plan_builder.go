@@ -8,28 +8,28 @@ type Builder struct {
 	plan LogicalPlan
 }
 
-func NewBuilder() Builder {
-	return Builder{}
+func NewBuilder() *Builder {
+	return &Builder{}
 }
 
-func (b Builder) Scan(path string, source datasource.TableReader, proj []string) Builder {
-	return Builder{plan: Scan{Path: path, Source: source, Projection: proj}}
+func (b Builder) Scan(path string, source datasource.TableReader, proj []string) *Builder {
+	return &Builder{plan: Scan{Path: path, Source: source, Projection: proj}}
 }
 
-func (b Builder) Project(expr ...Expr) Builder {
-	return Builder{plan: Projection{b.plan, expr}}
+func (b Builder) Project(expr ...Expr) *Builder {
+	return &Builder{plan: Projection{b.plan, expr}}
 }
 
-func (b Builder) Filter(pred Expr) Builder {
-	return Builder{plan: Selection{b.plan, pred}}
+func (b Builder) Filter(pred Expr) *Builder {
+	return &Builder{plan: Selection{b.plan, pred}}
 }
 
-func (b Builder) Aggregate(groupBy []Expr, aggExpr []AggregateExpr) Builder {
-	return Builder{plan: Aggregate{b.plan, groupBy, aggExpr}}
+func (b Builder) Aggregate(groupBy []Expr, aggExpr []AggregateExpr) *Builder {
+	return &Builder{plan: Aggregate{b.plan, groupBy, aggExpr}}
 }
 
-func (b Builder) Out(callback datasource.Callback) Builder {
-	return Builder{plan: Out{Next: b.plan, Callback: callback}}
+func (b Builder) Out(callback datasource.Callback) *Builder {
+	return &Builder{plan: Out{Next: b.plan, Callback: callback}}
 }
 
 func (b Builder) Build() (LogicalPlan, error) {

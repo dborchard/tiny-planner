@@ -9,12 +9,12 @@ import (
 
 type ExecContext struct {
 	SessionID string
-	State     physicalplan.ExecState
+	State     *physicalplan.ExecState
 }
 
 func NewContext() *ExecContext {
 	return &ExecContext{
-		State: physicalplan.ExecState{
+		State: &physicalplan.ExecState{
 			QueryPlanner: physicalplan.DefaultQueryPlanner{},
 			RuntimeEnv:   execution.NewRuntimeEnv(),
 		},

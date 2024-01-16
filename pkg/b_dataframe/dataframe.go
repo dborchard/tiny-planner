@@ -12,6 +12,7 @@ import (
 )
 
 type IDataFrame interface {
+	Scan(path string, source datasource.TableReader, proj []string) IDataFrame
 	Project(expr ...logicalplan.Expr) IDataFrame
 	Filter(expr logicalplan.Expr) IDataFrame
 	Aggregate(groupBy []logicalplan.Expr, aggregateExpr []logicalplan.AggregateExpr) IDataFrame
@@ -25,11 +26,11 @@ type IDataFrame interface {
 }
 
 type DataFrame struct {
-	sessionState phyiscalplan.ExecState
-	planBuilder  logicalplan.Builder
+	sessionState *phyiscalplan.ExecState
+	planBuilder  *logicalplan.Builder
 }
 
-func NewDataFrame(sessionState phyiscalplan.ExecState) *DataFrame {
+func NewDataFrame(sessionState *phyiscalplan.ExecState) IDataFrame {
 	return &DataFrame{sessionState: sessionState}
 }
 
