@@ -24,6 +24,7 @@ var _ LogicalPlan = Scan{}
 var _ LogicalPlan = Selection{}
 var _ LogicalPlan = Projection{}
 var _ LogicalPlan = Aggregate{}
+var _ LogicalPlan = Out{}
 
 // ----------- Scan -------------
 
@@ -161,7 +162,7 @@ func (s Selection) String() string {
 // ----------- Agg -------------
 
 type Aggregate struct {
-	Input         LogicalPlan
+	Next          LogicalPlan
 	GroupExpr     []Expr
 	AggregateExpr []AggregateExpr
 }
@@ -186,14 +187,14 @@ func (a Aggregate) Accept(visitor PlanVisitor) bool {
 func (a Aggregate) Schema() (containers.ISchema, error) {
 	var fields []arrow.Field
 	for _, e := range a.GroupExpr {
-		used, err := e.ColumnsUsed(a.Input)
+		used, err := e.ColumnsUsed(a.Next)
 		if err != nil {
 			return nil, err
 		}
 		fields = append(fields, used...)
 	}
 	for _, e := range a.AggregateExpr {
-		used, err := e.ColumnsUsed(a.Input)
+		used, err := e.ColumnsUsed(a.Next)
 		if err != nil {
 			return nil, err
 		}
@@ -203,9 +204,45 @@ func (a Aggregate) Schema() (containers.ISchema, error) {
 }
 
 func (a Aggregate) Children() []LogicalPlan {
-	return []LogicalPlan{a.Input}
+	return []LogicalPlan{a.Next}
 }
 
 func (a Aggregate) String() string {
 	return fmt.Sprintf("Aggregate: groupExpr=%s, aggregateExpr=%s", a.GroupExpr, a.AggregateExpr)
+}
+
+// ----------- Out -------------
+
+type Out struct {
+	Next     LogicalPlan
+	Callback datasource.Callback
+}
+
+func (o Out) Schema() (containers.ISchema, error) {
+	return o.Next.Schema()
+}
+
+func (o Out) Children() []LogicalPlan {
+	return []LogicalPlan{o.Next}
+}
+
+func (o Out) String() string {
+	return fmt.Sprintf("Out:")
+}
+
+func (o Out) Accept(visitor PlanVisitor) bool {
+	kontinue := visitor.PreVisit(o)
+	if !kontinue {
+		return false
+	}
+
+	if len(o.Children()) > 0 {
+		// TODO: we should iterate
+		kontinue = o.Children()[0].Accept(visitor)
+		if !kontinue {
+			return false
+		}
+	}
+
+	return visitor.PostVisit(o)
 }

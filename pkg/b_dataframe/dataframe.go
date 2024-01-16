@@ -71,6 +71,8 @@ func (df *DataFrame) LogicalPlan() (logicalplan.LogicalPlan, error) {
 }
 
 func (df *DataFrame) Execute(ctx context.Context, callback datasource.Callback) error {
+	df.planBuilder = df.planBuilder.Out(callback)
+
 	physicalPlan, err := df.PhysicalPlan()
 	if err != nil {
 		return err

@@ -35,7 +35,7 @@ func (d DefaultQueryPlanner) CreatePhyExpr(e logicalplan.Expr, schema containers
 		}
 		return BooleanBinaryExpr{L: l, R: r, Op: v.Op}, nil
 	default:
-		return nil, errors.New("not implemented")
+		return nil, errors.New("expr not implemented")
 	}
 }
 
@@ -68,8 +68,14 @@ func (d DefaultQueryPlanner) CreatePhyPlan(lp logicalplan.LogicalPlan, state Exe
 			selection := &Selection{Filter: filterExpr}
 			prev.SetNext(selection)
 			prev = selection
+		case logicalplan.Out:
+
+			callback := lPlan.Callback
+			out := &Out{CallbackPtr: callback}
+			prev.SetNext(out)
+			prev = out
 		default:
-			visitErr = errors.New("not implemented")
+			visitErr = errors.New("plan not implemented")
 		}
 		return visitErr == nil
 	}))

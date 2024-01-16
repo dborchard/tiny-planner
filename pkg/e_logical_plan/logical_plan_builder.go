@@ -28,6 +28,10 @@ func (b Builder) Aggregate(groupBy []Expr, aggExpr []AggregateExpr) Builder {
 	return Builder{plan: Aggregate{b.plan, groupBy, aggExpr}}
 }
 
+func (b Builder) Out(callback datasource.Callback) Builder {
+	return Builder{plan: Out{Next: b.plan, Callback: callback}}
+}
+
 func (b Builder) Build() (LogicalPlan, error) {
 	if err := Validate(b.plan); err != nil {
 		return nil, err
