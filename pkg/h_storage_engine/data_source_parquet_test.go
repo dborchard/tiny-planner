@@ -9,10 +9,12 @@ import (
 )
 
 func TestParquetDataSource_Scan(t *testing.T) {
-	ds := ParquetDataSource{Filename: "../../test/data/c1_c2_int64.parquet"}
-	ds.loadAndCacheSchema()
+	ds, err := NewParquetDataSource("../../test/data/c1_c2_int64.parquet", nil)
+	if err != nil {
+		t.Error(err)
+	}
 
-	err := ds.Iterator([]string{"c1", "c2"}, execution.TaskContext{
+	err = ds.Iterator([]string{"c1", "c2"}, execution.TaskContext{
 		Ctx: context.Background(),
 	}, []Callback{func(ctx context.Context, r containers.IBatch) error {
 		fmt.Println(r)

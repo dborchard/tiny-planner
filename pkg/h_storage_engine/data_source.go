@@ -11,7 +11,6 @@ type TableReader interface {
 	View(ctx context.Context, fn func(ctx context.Context, tx uint64) error) error
 	Iterator(projection []string, ctx execution.TaskContext, callbacks []Callback) error
 }
+type Callback func(ctx context.Context, r containers.IBatch) error
 
 var _ TableReader = &ParquetDataSource{}
-
-type Callback func(ctx context.Context, r containers.IBatch) error

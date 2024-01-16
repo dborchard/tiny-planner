@@ -8,55 +8,32 @@ import (
 	"golang.org/x/sync/errgroup"
 	"io"
 	"os"
+	"strings"
 	execution "tiny_planner/pkg/g_exec_runtime"
 	containers "tiny_planner/pkg/i_containers"
 )
 
 type ParquetDataSource struct {
-	Filename string
-	Sch      containers.ISchema
+	filePath string
+	schema   containers.ISchema
 }
 
-func NewParquetDataSource(filename string, schema containers.ISchema) (TableReader, error) {
-	ds := &ParquetDataSource{Filename: filename}
+func NewParquetDataSource(filePath string, schema containers.ISchema) (TableReader, error) {
+	ds := &ParquetDataSource{filePath: filePath}
 	if schema == nil {
 		var err error
-		schema, err = ds.loadAndCacheSchema()
+		schema, err = ds.inferSchema()
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	ds.Sch = schema
+	ds.schema = schema
 	return ds, nil
 }
 
 func (ds *ParquetDataSource) Schema() containers.ISchema {
-	return ds.Sch
-}
-
-func (ds *ParquetDataSource) loadAndCacheSchema() (containers.ISchema, error) {
-	pf, f, err := openParquetFile(ds.Filename)
-	defer f.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	var fields []arrow.Field
-	for _, field := range pf.Schema().Fields() {
-		switch field.Type().Kind() {
-		case parquet.Int32:
-			fields = append(fields, arrow.Field{Name: field.Name(), Type: arrow.PrimitiveTypes.Int32})
-		case parquet.Int64:
-			fields = append(fields, arrow.Field{Name: field.Name(), Type: arrow.PrimitiveTypes.Int64})
-		default:
-			return nil, fmt.Errorf("unsupported type %s", field.Type().Kind())
-		}
-	}
-
-	schema := containers.NewSchema(fields, nil)
-
-	return schema, nil
+	return ds.schema
 }
 
 func (ds *ParquetDataSource) View(ctx context.Context, fn func(ctx context.Context, tx uint64) error) error {
@@ -64,18 +41,20 @@ func (ds *ParquetDataSource) View(ctx context.Context, fn func(ctx context.Conte
 	return fn(ctx, tx)
 }
 
-func (ds *ParquetDataSource) Iterator(projection []string, tCtx execution.TaskContext, callbacks []Callback) error {
-	pf, f, err := openParquetFile(ds.Filename)
+func (ds *ParquetDataSource) Iterator(projection []string, tCtx execution.TaskContext, callbacks []Callback) (err error) {
+	parquetFile, osFile, err := openParquetFile(ds.filePath)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func(osFile *os.File) {
+		err = osFile.Close()
+	}(osFile)
 
 	rowGroups := make(chan parquet.RowGroup, len(callbacks))
 
 	errG, ctx := errgroup.WithContext(tCtx.Ctx)
 	for _, callback := range callbacks {
-		callback := callback
+		callback := callback // to create a copy of callback for each iteration
 		errG.Go(func() error {
 			for {
 				select {
@@ -91,13 +70,13 @@ func (ds *ParquetDataSource) Iterator(projection []string, tCtx execution.TaskCo
 						if !parquetColumnIn(colDef, projection) {
 							continue
 						}
-						vector, err := parquetColumnToVector(colDef, rg.ColumnChunks()[c])
+						vector, err := parquetColumnToArrowVector(colDef, rg.ColumnChunks()[c])
 						if err != nil {
 							return err
 						}
 						vectors = append(vectors, vector)
 					}
-					batch := containers.NewBatch(ds.Sch, vectors)
+					batch := containers.NewBatch(ds.schema, vectors)
 					err := callback(ctx, batch)
 					if err != nil {
 						return err
@@ -108,7 +87,7 @@ func (ds *ParquetDataSource) Iterator(projection []string, tCtx execution.TaskCo
 	}
 
 	errG.Go(func() error {
-		for _, rg := range pf.RowGroups() {
+		for _, rg := range parquetFile.RowGroups() {
 			rowGroups <- rg
 		}
 		close(rowGroups)
@@ -118,11 +97,11 @@ func (ds *ParquetDataSource) Iterator(projection []string, tCtx execution.TaskCo
 	return errG.Wait()
 }
 
-func parquetColumnToVector(colDef parquet.Field, col parquet.ColumnChunk) (containers.IVector, error) {
+func parquetColumnToArrowVector(parquetColDef parquet.Field, parquetColumnChunk parquet.ColumnChunk) (containers.IVector, error) {
 	var colType arrow.DataType
 	colData := make([]any, 0)
 
-	pages := col.Pages()
+	pages := parquetColumnChunk.Pages()
 	for {
 		page, err := pages.ReadPage()
 		if err != nil {
@@ -134,10 +113,11 @@ func parquetColumnToVector(colDef parquet.Field, col parquet.ColumnChunk) (conta
 		}
 
 		reader := page.Values()
+		// create a buffer to read the page data.
 		data := make([]parquet.Value, page.NumValues())
 		_, err = reader.ReadValues(data)
 
-		switch colDef.Type().Kind() {
+		switch parquetColDef.Type().Kind() {
 		case parquet.Int32:
 			colType = arrow.PrimitiveTypes.Int32
 			for _, value := range data {
@@ -149,40 +129,64 @@ func parquetColumnToVector(colDef parquet.Field, col parquet.ColumnChunk) (conta
 				colData = append(colData, value.Int64())
 			}
 		default:
-			return nil, fmt.Errorf("unsupported type %s", colDef.Type().Kind())
+			return nil, fmt.Errorf("unsupported type %s", parquetColDef.Type().Kind())
 		}
 	}
 	return containers.NewVector(colType, colData), nil
 }
 
-func parquetColumnIn(columnDef parquet.Field, projections []string) bool {
+func parquetColumnIn(parquetColDef parquet.Field, projections []string) bool {
 	if projections == nil {
 		return true
 	}
-	res := false
+	present := false
 	for _, col := range projections {
-		if col == columnDef.Name() {
-			res = true
+		if strings.EqualFold(col, parquetColDef.Name()) {
+			present = true
+			break
 		}
 	}
-	return res
+	return present
+}
+
+func (ds *ParquetDataSource) inferSchema() (schema containers.ISchema, err error) {
+	parquetFile, osFile, err := openParquetFile(ds.filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer func(f *os.File) {
+		err = f.Close()
+	}(osFile)
+
+	var fields []arrow.Field
+	for _, field := range parquetFile.Schema().Fields() {
+		switch field.Type().Kind() {
+		case parquet.Int32:
+			fields = append(fields, arrow.Field{Name: field.Name(), Type: arrow.PrimitiveTypes.Int32})
+		case parquet.Int64:
+			fields = append(fields, arrow.Field{Name: field.Name(), Type: arrow.PrimitiveTypes.Int64})
+		default:
+			return nil, fmt.Errorf("unsupported type %s", field.Type().Kind())
+		}
+	}
+	return containers.NewSchema(fields, nil), nil
 }
 
 func openParquetFile(file string) (*parquet.File, *os.File, error) {
-	f, err := os.Open(file)
+	osFile, err := os.Open(file)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	stats, err := f.Stat()
+	stats, err := osFile.Stat()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	pf, err := parquet.OpenFile(f, stats.Size())
+	parquetFile, err := parquet.OpenFile(osFile, stats.Size())
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return pf, f, nil
+	return parquetFile, osFile, nil
 }

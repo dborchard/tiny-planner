@@ -64,7 +64,7 @@ func (s *Scan) Children() []PhysicalPlan {
 
 func (s *Scan) String() string {
 	schema := s.Schema()
-	return "Scan: Sch=" + schema.String() + ", projection=" + strings.Join(s.Projection, ",")
+	return "Scan: schema=" + schema.String() + ", projection=" + strings.Join(s.Projection, ",")
 }
 
 //----------------- Projection -----------------
