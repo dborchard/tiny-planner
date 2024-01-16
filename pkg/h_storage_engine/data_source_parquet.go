@@ -17,16 +17,22 @@ type ParquetDataSource struct {
 	Sch      containers.ISchema
 }
 
-func (ds *ParquetDataSource) View(ctx context.Context, fn func(ctx context.Context, tx uint64) error) error {
-	tx := uint64(0) // TODO: this is timestamp
-	return fn(ctx, tx)
+func NewParquetDataSource(filename string, schema containers.ISchema) (TableReader, error) {
+	ds := &ParquetDataSource{Filename: filename}
+	if schema == nil {
+		var err error
+		schema, err = ds.loadAndCacheSchema()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	ds.Sch = schema
+	return ds, nil
 }
 
-func (ds *ParquetDataSource) Schema() (containers.ISchema, error) {
-	if ds.Sch == nil {
-		return ds.loadAndCacheSchema()
-	}
-	return ds.Sch, nil
+func (ds *ParquetDataSource) Schema() containers.ISchema {
+	return ds.Sch
 }
 
 func (ds *ParquetDataSource) loadAndCacheSchema() (containers.ISchema, error) {
@@ -49,9 +55,13 @@ func (ds *ParquetDataSource) loadAndCacheSchema() (containers.ISchema, error) {
 	}
 
 	schema := containers.NewSchema(fields, nil)
-	ds.Sch = schema
 
 	return schema, nil
+}
+
+func (ds *ParquetDataSource) View(ctx context.Context, fn func(ctx context.Context, tx uint64) error) error {
+	tx := uint64(0) // TODO: this is timestamp
+	return fn(ctx, tx)
 }
 
 func (ds *ParquetDataSource) Iterator(projection []string, tCtx execution.TaskContext, callbacks []Callback) error {

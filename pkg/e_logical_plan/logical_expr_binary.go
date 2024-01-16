@@ -40,16 +40,10 @@ func (be BooleanBinaryExpr) DataType(schema containers.ISchema) (arrow.DataType,
 	return arrow.FixedWidthTypes.Boolean, nil
 }
 
-func (be BooleanBinaryExpr) ColumnsUsed(input LogicalPlan) ([]arrow.Field, error) {
-	l, err := be.L.ColumnsUsed(input)
-	if err != nil {
-		return nil, err
-	}
-	r, err := be.R.ColumnsUsed(input)
-	if err != nil {
-		return nil, err
-	}
-	return append(l, r...), nil
+func (be BooleanBinaryExpr) ColumnsUsed(input LogicalPlan) []arrow.Field {
+	l := be.L.ColumnsUsed(input)
+	r := be.R.ColumnsUsed(input)
+	return append(l, r...)
 }
 func (be BooleanBinaryExpr) String() string {
 	return be.L.String() + " " + be.Op + " " + be.R.String()
@@ -75,16 +69,10 @@ func (m MathExpr) DataType(schema containers.ISchema) (arrow.DataType, error) {
 	return arrow.PrimitiveTypes.Float64, nil
 }
 
-func (m MathExpr) ColumnsUsed(input LogicalPlan) ([]arrow.Field, error) {
-	l, err := m.L.ColumnsUsed(input)
-	if err != nil {
-		return nil, err
-	}
-	r, err := m.R.ColumnsUsed(input)
-	if err != nil {
-		return nil, err
-	}
-	return append(l, r...), nil
+func (m MathExpr) ColumnsUsed(input LogicalPlan) []arrow.Field {
+	l := m.L.ColumnsUsed(input)
+	r := m.R.ColumnsUsed(input)
+	return append(l, r...)
 }
 
 func (m MathExpr) String() string {

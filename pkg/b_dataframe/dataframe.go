@@ -17,7 +17,7 @@ type IDataFrame interface {
 	Filter(expr logicalplan.Expr) IDataFrame
 	Aggregate(groupBy []logicalplan.Expr, aggregateExpr []logicalplan.AggregateExpr) IDataFrame
 
-	Schema() (containers.ISchema, error)
+	Schema() containers.ISchema
 	Collect(ctx context.Context, callback datasource.Callback) error
 	Show() error
 
@@ -69,10 +69,10 @@ func (df *DataFrame) TaskContext() execution.TaskContext {
 	return df.sessionState.TaskContext()
 }
 
-func (df *DataFrame) Schema() (containers.ISchema, error) {
+func (df *DataFrame) Schema() containers.ISchema {
 	build, err := df.planBuilder.Build()
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 	return build.Schema()
 }
@@ -96,7 +96,7 @@ func (df *DataFrame) Show() error {
 
 	// 1. add headers
 	headers := make([]string, 0)
-	schema, err := df.Schema()
+	schema := df.Schema()
 	if err != nil {
 		return err
 	}

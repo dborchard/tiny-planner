@@ -21,7 +21,7 @@ func (e AggregateExpr) String() string {
 	return fmt.Sprintf("%s(%s)", e.Name, e.String())
 }
 
-func (e AggregateExpr) ColumnsUsed(input LogicalPlan) ([]arrow.Field, error) {
+func (e AggregateExpr) ColumnsUsed(input LogicalPlan) []arrow.Field {
 	return e.Expr.ColumnsUsed(input)
 }
 func Sum(input Expr) AggregateExpr {

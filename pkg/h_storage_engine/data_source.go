@@ -7,14 +7,9 @@ import (
 )
 
 type TableReader interface {
-	Schema() (containers.ISchema, error)
+	Schema() containers.ISchema
 	View(ctx context.Context, fn func(ctx context.Context, tx uint64) error) error
 	Iterator(projection []string, ctx execution.TaskContext, callbacks []Callback) error
-
-	// Seek(predicate logicalplan.LogicalExpr) Iterator
-	// Iterator() Iterator
-	// HasNext() bool
-	// Next() containers.Batch
 }
 
 var _ TableReader = &ParquetDataSource{}

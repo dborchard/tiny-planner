@@ -9,7 +9,7 @@ import (
 )
 
 type LogicalPlan interface {
-	Schema() (containers.ISchema, error)
+	Schema() containers.ISchema
 	Children() []LogicalPlan
 	String() string
 	Accept(visitor PlanVisitor) bool
@@ -51,13 +51,10 @@ func (s Scan) Accept(visitor PlanVisitor) bool {
 	return visitor.PostVisit(s)
 }
 
-func (s Scan) Schema() (containers.ISchema, error) {
-	schema, err := s.Source.Schema()
-	if err != nil {
-		return nil, err
-	}
+func (s Scan) Schema() containers.ISchema {
+	schema := s.Source.Schema()
 	if len(s.Projection) == 0 {
-		return schema, nil
+		return schema
 	} else {
 		return schema.Select(s.Projection)
 	}
@@ -98,16 +95,13 @@ func (p Projection) Accept(visitor PlanVisitor) bool {
 	return visitor.PostVisit(p)
 }
 
-func (p Projection) Schema() (containers.ISchema, error) {
+func (p Projection) Schema() containers.ISchema {
 	var fields []arrow.Field
 	for _, e := range p.Proj {
-		used, err := e.ColumnsUsed(p.Next)
-		if err != nil {
-			return nil, err
-		}
+		used := e.ColumnsUsed(p.Next)
 		fields = append(fields, used...)
 	}
-	return containers.NewSchema(fields, nil), nil
+	return containers.NewSchema(fields, nil)
 }
 
 func (p Projection) Children() []LogicalPlan {
@@ -147,7 +141,7 @@ func (s Selection) Accept(visitor PlanVisitor) bool {
 	return visitor.PostVisit(s)
 }
 
-func (s Selection) Schema() (containers.ISchema, error) {
+func (s Selection) Schema() containers.ISchema {
 	return s.Next.Schema()
 }
 
@@ -184,23 +178,17 @@ func (a Aggregate) Accept(visitor PlanVisitor) bool {
 	return visitor.PostVisit(a)
 }
 
-func (a Aggregate) Schema() (containers.ISchema, error) {
+func (a Aggregate) Schema() containers.ISchema {
 	var fields []arrow.Field
 	for _, e := range a.GroupExpr {
-		used, err := e.ColumnsUsed(a.Next)
-		if err != nil {
-			return nil, err
-		}
+		used := e.ColumnsUsed(a.Next)
 		fields = append(fields, used...)
 	}
 	for _, e := range a.AggregateExpr {
-		used, err := e.ColumnsUsed(a.Next)
-		if err != nil {
-			return nil, err
-		}
+		used := e.ColumnsUsed(a.Next)
 		fields = append(fields, used...)
 	}
-	return containers.NewSchema(fields, nil), nil
+	return containers.NewSchema(fields, nil)
 }
 
 func (a Aggregate) Children() []LogicalPlan {
@@ -218,7 +206,7 @@ type Out struct {
 	Callback datasource.Callback
 }
 
-func (o Out) Schema() (containers.ISchema, error) {
+func (o Out) Schema() containers.ISchema {
 	return o.Next.Schema()
 }
 

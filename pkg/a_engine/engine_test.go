@@ -8,7 +8,10 @@ import (
 
 func TestParquetFile(t *testing.T) {
 	ctx := NewContext()
-	df := ctx.Parquet("../../test/data/c1_c2_int64.parquet")
+	df, err := ctx.Parquet("../../test/data/c1_c2_int64.parquet", nil)
+	if err != nil {
+		t.Error(err)
+	}
 
 	df = df.
 		Project(
@@ -23,7 +26,7 @@ func TestParquetFile(t *testing.T) {
 	logicalPlan, _ := df.LogicalPlan()
 	fmt.Println(logicalplan.PrettyPrint(logicalPlan, 0))
 
-	err := df.Show()
+	err = df.Show()
 	if err != nil {
 		t.Error(err)
 	}

@@ -52,17 +52,17 @@ func (d DefaultQueryPlanner) CreatePhyPlan(lp logicalplan.LogicalPlan, state Exe
 		case logicalplan.Projection:
 			projExpr := make([]Expr, len(lPlan.Proj))
 			for i, e := range lPlan.Proj {
-				schema, _ := prev.Schema()
+				schema := prev.Schema()
 				projExpr[i], _ = d.CreatePhyExpr(e, schema)
 			}
-			projSchema, _ := lPlan.Schema()
+			projSchema := lPlan.Schema()
 
 			projection := &Projection{Proj: projExpr, Sch: projSchema}
 			prev.SetNext(projection)
 			prev = projection
 
 		case logicalplan.Selection:
-			schema, _ := prev.Schema()
+			schema := prev.Schema()
 			filterExpr, _ := d.CreatePhyExpr(lPlan.Filter, schema)
 
 			selection := &Selection{Filter: filterExpr}

@@ -9,7 +9,7 @@ import (
 
 type Expr interface {
 	DataType(schema containers.ISchema) (arrow.DataType, error)
-	ColumnsUsed(input LogicalPlan) ([]arrow.Field, error)
+	ColumnsUsed(input LogicalPlan) []arrow.Field
 	String() string
 }
 
@@ -39,17 +39,14 @@ func (col Column) DataType(schema containers.ISchema) (arrow.DataType, error) {
 	return nil, fmt.Errorf("SQLError: No column named '%s'", col.Name)
 }
 
-func (col Column) ColumnsUsed(input LogicalPlan) ([]arrow.Field, error) {
-	schema, err := input.Schema()
-	if err != nil {
-		return nil, err
-	}
+func (col Column) ColumnsUsed(input LogicalPlan) []arrow.Field {
+	schema := input.Schema()
 	for _, f := range schema.Fields() {
 		if f.Name == col.Name {
-			return []arrow.Field{f}, nil
+			return []arrow.Field{f}
 		}
 	}
-	return nil, fmt.Errorf("SQLError: No column named '%s'", col.Name)
+	return []arrow.Field{}
 }
 
 func (col Column) String() string {
@@ -67,7 +64,7 @@ func (expr Alias) DataType(schema containers.ISchema) (arrow.DataType, error) {
 	return expr.Expr.DataType(schema)
 }
 
-func (expr Alias) ColumnsUsed(input LogicalPlan) ([]arrow.Field, error) {
+func (expr Alias) ColumnsUsed(input LogicalPlan) []arrow.Field {
 	return expr.Expr.ColumnsUsed(input)
 }
 
@@ -85,8 +82,8 @@ func (lit LiteralString) DataType(schema containers.ISchema) (arrow.DataType, er
 	return arrow.BinaryTypes.String, nil
 }
 
-func (lit LiteralString) ColumnsUsed(input LogicalPlan) ([]arrow.Field, error) {
-	return nil, nil
+func (lit LiteralString) ColumnsUsed(input LogicalPlan) []arrow.Field {
+	return nil
 }
 
 func (lit LiteralString) String() string {
@@ -101,8 +98,8 @@ func (lit LiteralInt64) DataType(schema containers.ISchema) (arrow.DataType, err
 	return arrow.PrimitiveTypes.Int64, nil
 }
 
-func (lit LiteralInt64) ColumnsUsed(input LogicalPlan) ([]arrow.Field, error) {
-	return nil, nil
+func (lit LiteralInt64) ColumnsUsed(input LogicalPlan) []arrow.Field {
+	return nil
 }
 
 func (lit LiteralInt64) String() string {
@@ -117,8 +114,8 @@ func (lit LiteralFloat64) DataType(schema containers.ISchema) (arrow.DataType, e
 	return arrow.PrimitiveTypes.Float64, nil
 }
 
-func (lit LiteralFloat64) ColumnsUsed(input LogicalPlan) ([]arrow.Field, error) {
-	return nil, nil
+func (lit LiteralFloat64) ColumnsUsed(input LogicalPlan) []arrow.Field {
+	return nil
 }
 
 func (lit LiteralFloat64) String() string {

@@ -10,7 +10,7 @@ import (
 )
 
 type PhysicalPlan interface {
-	Schema() (containers.ISchema, error)
+	Schema() containers.ISchema
 	Children() []PhysicalPlan
 	Callback(ctx context.Context, r containers.IBatch) error
 	Execute(ctx execution.TaskContext, callback datasource.Callback) error
@@ -39,14 +39,11 @@ func (s *Scan) Callback(ctx context.Context, r containers.IBatch) error {
 	return s.callback(ctx, r)
 }
 
-func (s *Scan) Schema() (containers.ISchema, error) {
+func (s *Scan) Schema() containers.ISchema {
 	if len(s.Projection) == 0 {
 		return s.Source.Schema()
 	}
-	schema, err := s.Source.Schema()
-	if err != nil {
-		return nil, err
-	}
+	schema := s.Source.Schema()
 	return schema.Select(s.Projection)
 }
 
@@ -66,10 +63,7 @@ func (s *Scan) Children() []PhysicalPlan {
 }
 
 func (s *Scan) String() string {
-	schema, err := s.Schema()
-	if err != nil {
-		panic(err)
-	}
+	schema := s.Schema()
 	return "Scan: Sch=" + schema.String() + ", projection=" + strings.Join(s.Projection, ",")
 }
 
@@ -101,8 +95,8 @@ func (p *Projection) String() string {
 	return fmt.Sprintf("Projection: %s", p.Proj)
 }
 
-func (p *Projection) Schema() (containers.ISchema, error) {
-	return p.Sch, nil
+func (p *Projection) Schema() containers.ISchema {
+	return p.Sch
 }
 
 func (p *Projection) Execute(ctx execution.TaskContext, callback datasource.Callback) error {
@@ -133,7 +127,7 @@ func (s *Selection) Callback(ctx context.Context, batch containers.IBatch) error
 	return s.Next.Callback(ctx, batch)
 }
 
-func (s *Selection) Schema() (containers.ISchema, error) {
+func (s *Selection) Schema() containers.ISchema {
 	return s.Next.Schema()
 }
 
@@ -152,8 +146,8 @@ type Out struct {
 	Scan        PhysicalPlan
 }
 
-func (e Out) Schema() (containers.ISchema, error) {
-	return nil, nil
+func (e Out) Schema() containers.ISchema {
+	return nil
 }
 
 func (e Out) Children() []PhysicalPlan {

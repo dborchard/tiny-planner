@@ -3,7 +3,7 @@ package containers
 import "github.com/apache/arrow/go/v12/arrow"
 
 type ISchema interface {
-	Select(projection []string) (ISchema, error)
+	Select(projection []string) ISchema
 	IndexOf(name string) int
 	String() string
 	Fields() []arrow.Field
@@ -20,7 +20,7 @@ func NewSchema(fields []arrow.Field, metadata *arrow.Metadata) Schema {
 	return Schema{arrow.NewSchema(fields, metadata)}
 }
 
-func (s Schema) Select(projection []string) (ISchema, error) {
+func (s Schema) Select(projection []string) ISchema {
 	subFields := make([]arrow.Field, 0)
 	for _, field := range s.src.Fields() {
 		for _, columnName := range projection {
@@ -31,7 +31,7 @@ func (s Schema) Select(projection []string) (ISchema, error) {
 		}
 	}
 	newSchema := arrow.NewSchema(subFields, nil)
-	return Schema{newSchema}, nil
+	return Schema{newSchema}
 }
 
 func (s Schema) IndexOf(columnName string) int {
