@@ -3,27 +3,29 @@ package physicalplan
 import (
 	"errors"
 	logicalplan "tiny_planner/pkg/e_logical_plan"
+	"tiny_planner/pkg/f_physicalplan/expr_eval"
+	"tiny_planner/pkg/f_physicalplan/operators"
 	containers "tiny_planner/pkg/i_containers"
 )
 
 type QueryPlanner interface {
-	CreatePhyExpr(e logicalplan.Expr, schema containers.ISchema) (Expr, error)
-	CreatePhyPlan(lp logicalplan.LogicalPlan, state ExecState) (PhysicalPlan, error)
+	CreatePhyExpr(e logicalplan.Expr, schema containers.ISchema) (expr_eval.Expr, error)
+	CreatePhyPlan(lp logicalplan.LogicalPlan, state ExecState) (operators.PhysicalPlan, error)
 }
 
 type DefaultQueryPlanner struct {
 }
 
-func (d DefaultQueryPlanner) CreatePhyExpr(e logicalplan.Expr, schema containers.ISchema) (Expr, error) {
+func (d DefaultQueryPlanner) CreatePhyExpr(e logicalplan.Expr, schema containers.ISchema) (expr_eval.Expr, error) {
 	switch v := e.(type) {
 	case logicalplan.Column:
-		return ColumnExpression{Index: schema.IndexOf(v.Name)}, nil
+		return expr_eval.ColumnExpression{Index: schema.IndexOf(v.Name)}, nil
 	case logicalplan.LiteralInt64:
-		return LiteralInt64Expression{Value: v.Val}, nil
+		return expr_eval.LiteralInt64Expression{Value: v.Val}, nil
 	case logicalplan.LiteralFloat64:
-		return LiteralFloat64Expression{Value: v.Val}, nil
+		return expr_eval.LiteralFloat64Expression{Value: v.Val}, nil
 	case logicalplan.LiteralString:
-		return LiteralStringExpression{Value: v.Val}, nil
+		return expr_eval.LiteralStringExpression{Value: v.Val}, nil
 	case logicalplan.BooleanBinaryExpr:
 		l, err := d.CreatePhyExpr(v.L, schema)
 		if err != nil {
@@ -33,31 +35,31 @@ func (d DefaultQueryPlanner) CreatePhyExpr(e logicalplan.Expr, schema containers
 		if err != nil {
 			return nil, err
 		}
-		return BooleanBinaryExpr{L: l, R: r, Op: v.Op}, nil
+		return expr_eval.BooleanBinaryExpr{L: l, R: r, Op: v.Op}, nil
 	default:
 		return nil, errors.New("expr not implemented")
 	}
 }
 
-func (d DefaultQueryPlanner) CreatePhyPlan(lp logicalplan.LogicalPlan, state ExecState) (PhysicalPlan, error) {
+func (d DefaultQueryPlanner) CreatePhyPlan(lp logicalplan.LogicalPlan, state ExecState) (operators.PhysicalPlan, error) {
 	var visitErr error
-	var source PhysicalPlan
-	var prev PhysicalPlan
+	var source operators.PhysicalPlan
+	var prev operators.PhysicalPlan
 	lp.Accept(PostPlanVisitorFunc(func(plan logicalplan.LogicalPlan) bool {
 		switch lPlan := plan.(type) {
 		case logicalplan.Scan:
-			scan := &Scan{Source: lPlan.Source, Projection: lPlan.Projection}
+			scan := &operators.Scan{Source: lPlan.Source, Projection: lPlan.Projection}
 			source = scan
 			prev = scan
 		case logicalplan.Projection:
-			projExpr := make([]Expr, len(lPlan.Proj))
+			projExpr := make([]expr_eval.Expr, len(lPlan.Proj))
 			for i, e := range lPlan.Proj {
 				schema := prev.Schema()
 				projExpr[i], _ = d.CreatePhyExpr(e, schema)
 			}
 			projSchema := lPlan.Schema()
 
-			projection := &Projection{Proj: projExpr, Sch: projSchema}
+			projection := &operators.Projection{Proj: projExpr, Sch: projSchema}
 			prev.SetNext(projection)
 			prev = projection
 
@@ -65,13 +67,12 @@ func (d DefaultQueryPlanner) CreatePhyPlan(lp logicalplan.LogicalPlan, state Exe
 			schema := prev.Schema()
 			filterExpr, _ := d.CreatePhyExpr(lPlan.Filter, schema)
 
-			selection := &Selection{Filter: filterExpr}
+			selection := &operators.Selection{Filter: filterExpr}
 			prev.SetNext(selection)
 			prev = selection
 		case logicalplan.Out:
-
 			callback := lPlan.Callback
-			out := &Out{CallbackPtr: callback}
+			out := &operators.Out{OutputCallback: callback}
 			prev.SetNext(out)
 			prev = out
 		default:

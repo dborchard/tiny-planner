@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 	logicalplan "tiny_planner/pkg/e_logical_plan"
+	"tiny_planner/pkg/f_physicalplan/operators"
 	"tiny_planner/pkg/g_exec_runtime"
 )
 
@@ -32,6 +33,6 @@ func (s ExecState) TaskContext() execution.TaskContext {
 	}
 }
 
-func (s ExecState) CreatePhysicalPlan(plan logicalplan.LogicalPlan) (PhysicalPlan, error) {
+func (s ExecState) CreatePhysicalPlan(plan logicalplan.LogicalPlan) (operators.PhysicalPlan, error) {
 	return s.QueryPlanner.CreatePhyPlan(plan, s)
 }

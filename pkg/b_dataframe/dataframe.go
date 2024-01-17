@@ -6,6 +6,7 @@ import (
 	"os"
 	logicalplan "tiny_planner/pkg/e_logical_plan"
 	phyiscalplan "tiny_planner/pkg/f_physicalplan"
+	"tiny_planner/pkg/f_physicalplan/operators"
 	"tiny_planner/pkg/g_exec_runtime"
 	datasource "tiny_planner/pkg/h_storage_engine"
 	containers "tiny_planner/pkg/i_containers"
@@ -22,7 +23,7 @@ type IDataFrame interface {
 	Show() error
 
 	LogicalPlan() (logicalplan.LogicalPlan, error)
-	PhysicalPlan() (phyiscalplan.PhysicalPlan, error)
+	PhysicalPlan() (operators.PhysicalPlan, error)
 }
 
 type DataFrame struct {
@@ -115,7 +116,7 @@ func (df *DataFrame) Show() error {
 	return nil
 }
 
-func (df *DataFrame) PhysicalPlan() (phyiscalplan.PhysicalPlan, error) {
+func (df *DataFrame) PhysicalPlan() (operators.PhysicalPlan, error) {
 	plan, err := df.LogicalPlan()
 	if err != nil {
 		return nil, err

@@ -8,7 +8,11 @@ import (
 )
 
 type Expr interface {
+	// DataType returns the data type of the expression. It returns error as well.
 	DataType(schema containers.ISchema) (arrow.DataType, error)
+
+	// ColumnsUsed returns the columns used in the expression.
+	//TODO: replace it with ColumnsUsedExprs() []Expr
 	ColumnsUsed(input LogicalPlan) []arrow.Field
 	String() string
 }
