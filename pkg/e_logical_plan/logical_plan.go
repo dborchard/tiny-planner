@@ -9,8 +9,11 @@ import (
 
 type LogicalPlan interface {
 	Schema() containers.ISchema
-	Children() []LogicalPlan
 	String() string
+
+	//TODO: later on make this Children() and Accept() part of abstract class.
+
+	Children() []LogicalPlan
 	Accept(visitor PlanVisitor) bool
 }
 
@@ -21,7 +24,6 @@ type PlanVisitor interface {
 
 var _ LogicalPlan = Input{}
 var _ LogicalPlan = Output{}
-var _ LogicalPlan = basePlan{}
 
 var _ LogicalPlan = Selection{}
 var _ LogicalPlan = Projection{}

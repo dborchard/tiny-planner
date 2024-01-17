@@ -6,43 +6,6 @@ import (
 	containers "tiny_planner/pkg/i_containers"
 )
 
-// ----------- base -------------
-
-type basePlan struct {
-}
-
-func (b basePlan) Schema() containers.ISchema {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (b basePlan) Children() []LogicalPlan {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (b basePlan) String() string {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (b basePlan) Accept(visitor PlanVisitor) bool {
-	kontinue := visitor.PreVisit(b)
-	if !kontinue {
-		return false
-	}
-
-	if len(b.Children()) > 0 {
-		// TODO: we should iterate
-		kontinue = b.Children()[0].Accept(visitor)
-		if !kontinue {
-			return false
-		}
-	}
-
-	return visitor.PostVisit(b)
-}
-
 // ----------- Input -------------
 
 type Input struct {
