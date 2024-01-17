@@ -11,7 +11,10 @@ import (
 //----------------- Input -----------------
 
 type Input struct {
-	Source     datasource.TableReader
+	Source datasource.TableReader
+
+	//TODO: make this Expr instead of string
+	// Add more things like Distinct or Filter etc.
 	Projection []string
 	next       PhysicalPlan
 }
