@@ -84,9 +84,9 @@ func (df *DataFrame) LogicalPlan() (logicalplan.LogicalPlan, error) {
 
 func (df *DataFrame) Show() error {
 
-	result := make([]containers.IBatch, 0)
-	err := df.Collect(context.TODO(), func(ctx context.Context, r containers.IBatch) error {
-		result = append(result, r)
+	batches := make([]containers.IBatch, 0)
+	err := df.Collect(context.TODO(), func(ctx context.Context, batch containers.IBatch) error {
+		batches = append(batches, batch)
 		return nil
 	})
 
@@ -107,7 +107,7 @@ func (df *DataFrame) Show() error {
 	table.SetHeader(headers)
 
 	// 2. add data
-	for _, batch := range result {
+	for _, batch := range batches {
 		table.AppendBulk(batch.StringTable())
 	}
 

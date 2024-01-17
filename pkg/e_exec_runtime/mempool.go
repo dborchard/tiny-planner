@@ -12,10 +12,10 @@ type MemPool struct {
 
 func (m *MemPool) Alloc(size int) []byte {
 	//TODO implement me
-	panic("implement me")
+	panic("implement later")
 }
 
 func (m *MemPool) Free(buf []byte) {
 	//TODO implement me
-	panic("implement me")
+	panic("implement STANDARD_FUNCTION")
 }

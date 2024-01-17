@@ -27,6 +27,5 @@ func (c *ExecContext) Parquet(path string, schema containers.ISchema) (dataframe
 		return nil, err
 	}
 
-	df := dataframe.NewDataFrame(c.State)
-	return df.Scan(path, src, nil), nil
+	return dataframe.NewDataFrame(c.State).Scan(path, src, nil), nil
 }
