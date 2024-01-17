@@ -48,7 +48,7 @@ func (d DefaultQueryPlanner) CreatePhyPlan(lp logicalplan.LogicalPlan, state Exe
 	lp.Accept(PostPlanVisitorFunc(func(plan logicalplan.LogicalPlan) bool {
 		switch lPlan := plan.(type) {
 		case logicalplan.Scan:
-			scan := &operators.Scan{Source: lPlan.Source, Projection: lPlan.Projection}
+			scan := &operators.Input{Source: lPlan.Source, Projection: lPlan.Projection}
 			source = scan
 			prev = scan
 		case logicalplan.Projection:
@@ -72,7 +72,7 @@ func (d DefaultQueryPlanner) CreatePhyPlan(lp logicalplan.LogicalPlan, state Exe
 			prev = selection
 		case logicalplan.Out:
 			callback := lPlan.Callback
-			out := &operators.Out{OutputCallback: callback}
+			out := &operators.Output{OutputCallback: callback}
 			prev.SetNext(out)
 			prev = out
 		default:

@@ -13,15 +13,17 @@ type PhysicalPlan interface {
 	Schema() containers.ISchema
 	Children() []PhysicalPlan
 
+	// Callback is used by the parent to send data to the child.
+	// Used by Output, Projection, Selection
 	Callback(ctx context.Context, r containers.IBatch) error
 	SetNext(next PhysicalPlan)
 
-	// Execute is only valid for DataSource, ie Scan
+	// Execute is only valid for DataSource, ie Input
 	Execute(ctx execution.TaskContext, callback datasource.Callback) error
 }
 
-var _ PhysicalPlan = &Scan{}
-var _ PhysicalPlan = &Out{}
+var _ PhysicalPlan = &Input{}
+var _ PhysicalPlan = &Output{}
 
 var _ PhysicalPlan = &Projection{}
 var _ PhysicalPlan = &Selection{}
@@ -58,7 +60,7 @@ func (p *Projection) Schema() containers.ISchema {
 	return p.Sch
 }
 
-func (p *Projection) Execute(ctx execution.TaskContext, callback datasource.Callback) error {
+func (p *Projection) Execute(_ execution.TaskContext, _ datasource.Callback) error {
 	panic("bug if you see this")
 }
 

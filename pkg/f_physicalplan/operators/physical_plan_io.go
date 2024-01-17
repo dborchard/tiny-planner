@@ -8,23 +8,23 @@ import (
 	containers "tiny_planner/pkg/i_containers"
 )
 
-//----------------- Scan -----------------
+//----------------- Input -----------------
 
-type Scan struct {
+type Input struct {
 	Source     datasource.TableReader
 	Projection []string
 	next       PhysicalPlan
 }
 
-func (s *Scan) SetNext(next PhysicalPlan) {
+func (s *Input) SetNext(next PhysicalPlan) {
 	s.next = next
 }
 
-func (s *Scan) Callback(ctx context.Context, r containers.IBatch) error {
+func (s *Input) Callback(ctx context.Context, r containers.IBatch) error {
 	panic("bug")
 }
 
-func (s *Scan) Schema() containers.ISchema {
+func (s *Input) Schema() containers.ISchema {
 	if len(s.Projection) == 0 {
 		return s.Source.Schema()
 	}
@@ -32,7 +32,7 @@ func (s *Scan) Schema() containers.ISchema {
 	return schema.Select(s.Projection)
 }
 
-func (s *Scan) Execute(ctx execution.TaskContext, _ datasource.Callback) error {
+func (s *Input) Execute(ctx execution.TaskContext, _ datasource.Callback) error {
 
 	childrenCallbacks := make([]datasource.Callback, 0, len(s.Children()))
 	for _, plan := range s.Children() {
@@ -45,37 +45,37 @@ func (s *Scan) Execute(ctx execution.TaskContext, _ datasource.Callback) error {
 	return s.Source.Iterator(ctx, childrenCallbacks, options...)
 }
 
-func (s *Scan) Children() []PhysicalPlan {
+func (s *Input) Children() []PhysicalPlan {
 	return []PhysicalPlan{s.next}
 }
 
-func (s *Scan) String() string {
+func (s *Input) String() string {
 	schema := s.Schema()
-	return "Scan: schema=" + schema.String() + ", projection=" + strings.Join(s.Projection, ",")
+	return "Input: schema=" + schema.String() + ", projection=" + strings.Join(s.Projection, ",")
 }
 
-// --------Out---------
+// --------Output---------
 
-type Out struct {
+type Output struct {
 	OutputCallback datasource.Callback
 }
 
-func (e Out) Schema() containers.ISchema {
+func (e Output) Schema() containers.ISchema {
 	panic("bug")
 }
 
-func (e Out) Children() []PhysicalPlan {
+func (e Output) Children() []PhysicalPlan {
 	panic("bug")
 }
 
-func (e Out) Callback(ctx context.Context, r containers.IBatch) error {
+func (e Output) Callback(ctx context.Context, r containers.IBatch) error {
 	return e.OutputCallback(ctx, r)
 }
 
-func (e Out) Execute(ctx execution.TaskContext, callback datasource.Callback) error {
+func (e Output) Execute(ctx execution.TaskContext, callback datasource.Callback) error {
 	panic("bug")
 }
 
-func (e Out) SetNext(next PhysicalPlan) {
+func (e Output) SetNext(next PhysicalPlan) {
 	panic("bug")
 }
