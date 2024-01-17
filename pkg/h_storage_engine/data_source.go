@@ -9,12 +9,12 @@ import (
 type TableReader interface {
 	Schema() containers.ISchema
 	View(ctx context.Context, fn func(ctx context.Context, tx uint64) error) error
-	Iterator(ctx execution.TaskContext, callbacks []IterCallback, options ...Option) error
+	Iterator(ctx execution.TaskContext, callbacks []Callback, options ...Option) error
 }
 
 var _ TableReader = &ParquetDataSource{}
 
-type IterCallback func(ctx context.Context, batch containers.IBatch) error
+type Callback func(ctx context.Context, batch containers.IBatch) error
 
 type Option func(opts *IterOptions)
 

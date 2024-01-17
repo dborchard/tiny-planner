@@ -15,7 +15,7 @@ func TestParquetDataSource_Scan(t *testing.T) {
 	}
 
 	err = ds.Iterator(execution.TaskContext{Ctx: context.Background()},
-		[]IterCallback{func(ctx context.Context, r containers.IBatch) error {
+		[]Callback{func(ctx context.Context, r containers.IBatch) error {
 			fmt.Println(r)
 			return nil
 		}},

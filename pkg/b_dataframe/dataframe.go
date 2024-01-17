@@ -18,7 +18,7 @@ type IDataFrame interface {
 	Aggregate(groupBy []logicalplan.Expr, aggregateExpr []logicalplan.AggregateExpr) IDataFrame
 
 	Schema() containers.ISchema
-	Collect(ctx context.Context, callback datasource.IterCallback) error
+	Collect(ctx context.Context, callback datasource.Callback) error
 	Show() error
 
 	LogicalPlan() (logicalplan.LogicalPlan, error)
@@ -55,7 +55,7 @@ func (df *DataFrame) Aggregate(groupBy []logicalplan.Expr, aggExpr []logicalplan
 	return df
 }
 
-func (df *DataFrame) Collect(ctx context.Context, callback datasource.IterCallback) error {
+func (df *DataFrame) Collect(ctx context.Context, callback datasource.Callback) error {
 	df.planBuilder = df.planBuilder.Out(callback)
 
 	physicalPlan, err := df.PhysicalPlan()

@@ -41,7 +41,7 @@ func (ds *ParquetDataSource) View(ctx context.Context, fn func(ctx context.Conte
 	return fn(ctx, tx)
 }
 
-func (ds *ParquetDataSource) Iterator(tCtx execution.TaskContext, callbacks []IterCallback, options ...Option) (err error) {
+func (ds *ParquetDataSource) Iterator(tCtx execution.TaskContext, callbacks []Callback, options ...Option) (err error) {
 	parquetFile, osFile, err := openParquetFile(ds.filePath)
 	if err != nil {
 		return err

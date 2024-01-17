@@ -28,7 +28,7 @@ func (b Builder) Aggregate(groupBy []Expr, aggExpr []AggregateExpr) *Builder {
 	return &Builder{plan: Aggregate{b.plan, groupBy, aggExpr}}
 }
 
-func (b Builder) Out(callback datasource.IterCallback) *Builder {
+func (b Builder) Out(callback datasource.Callback) *Builder {
 	return &Builder{plan: Out{Next: b.plan, Callback: callback}}
 }
 
