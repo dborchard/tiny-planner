@@ -10,17 +10,6 @@ import logicalplan "tiny_planner/pkg/e_logical_plan"
 // But in push based approach, we need to know the schema of the parent node before we can construct the child node.
 // So, we need PostOrder traversal of the logical plan.
 
-type PrePlanVisitorFunc func(plan logicalplan.LogicalPlan) bool
-
-func (f PrePlanVisitorFunc) PreVisit(plan logicalplan.LogicalPlan) bool {
-	return f(plan)
-}
-
-func (f PrePlanVisitorFunc) PostVisit(_ logicalplan.LogicalPlan) bool {
-	return false
-}
-
-// PostPlanVisitorFunc is a convenience type for creating PlanVisitor
 type PostPlanVisitorFunc func(plan logicalplan.LogicalPlan) bool
 
 func (f PostPlanVisitorFunc) PreVisit(_ logicalplan.LogicalPlan) bool {

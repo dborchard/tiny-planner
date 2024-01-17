@@ -70,6 +70,7 @@ func (d DefaultQueryPlanner) CreatePhyPlan(lp logicalplan.LogicalPlan, state Exe
 			selection := &operators.Selection{Filter: filterExpr}
 			prev.SetNext(selection)
 			prev = selection
+
 		case logicalplan.Out:
 			callback := lPlan.Callback
 			out := &operators.Output{OutputCallback: callback}
