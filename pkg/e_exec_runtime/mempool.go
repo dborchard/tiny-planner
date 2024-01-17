@@ -17,5 +17,5 @@ func (m *MemPool) Alloc(size int) []byte {
 
 func (m *MemPool) Free(buf []byte) {
 	//TODO implement me
-	panic("implement STANDARD_FUNCTION")
+	panic("implement later")
 }

@@ -18,7 +18,7 @@ type IDataFrame interface {
 	Filter(expr logicalplan.Expr) IDataFrame
 	Aggregate(groupBy []logicalplan.Expr, aggregateExpr []logicalplan.AggregateExpr) IDataFrame
 
-	Schema() containers.ISchema
+	Schema() (containers.ISchema, error)
 	Collect(ctx context.Context, callback datasource.Callback) error
 	Show() error
 
@@ -32,11 +32,11 @@ type DataFrame struct {
 }
 
 func NewDataFrame(sessionState *phyiscalplan.ExecState) IDataFrame {
-	return &DataFrame{sessionState: sessionState}
+	return &DataFrame{sessionState: sessionState, planBuilder: logicalplan.NewBuilder()}
 }
 
 func (df *DataFrame) Scan(path string, source datasource.TableReader, proj []string) IDataFrame {
-	df.planBuilder = logicalplan.NewBuilder().Input(path, source, proj)
+	df.planBuilder = df.planBuilder.Input(path, source, proj)
 	return df
 }
 
@@ -70,12 +70,13 @@ func (df *DataFrame) TaskContext() execution.TaskContext {
 	return df.sessionState.TaskContext()
 }
 
-func (df *DataFrame) Schema() containers.ISchema {
+func (df *DataFrame) Schema() (containers.ISchema, error) {
 	build, err := df.planBuilder.Build()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return build.Schema()
+
+	return build.Schema(), nil
 }
 
 func (df *DataFrame) LogicalPlan() (logicalplan.LogicalPlan, error) {
@@ -97,7 +98,7 @@ func (df *DataFrame) Show() error {
 
 	// 1. add headers
 	headers := make([]string, 0)
-	schema := df.Schema()
+	schema, err := df.Schema()
 	if err != nil {
 		return err
 	}

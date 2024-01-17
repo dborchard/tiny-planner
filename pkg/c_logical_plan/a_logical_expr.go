@@ -31,6 +31,7 @@ var _ Expr = LiteralFloat64{}
 // ---------- Column ----------
 
 type Column struct {
+	// TODO: should this have arrow.Field?
 	Name string
 }
 
