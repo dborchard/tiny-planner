@@ -3,9 +3,9 @@ package physicalplan
 import (
 	"context"
 	"time"
-	logicalplan "tiny_planner/pkg/e_logical_plan"
-	"tiny_planner/pkg/f_physicalplan/operators"
-	"tiny_planner/pkg/g_exec_runtime"
+	logicalplan "tiny_planner/pkg/c_logical_plan"
+	"tiny_planner/pkg/d_physicalplan/operators"
+	"tiny_planner/pkg/e_exec_runtime"
 )
 
 type ExecState struct {

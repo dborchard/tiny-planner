@@ -2,10 +2,10 @@ package physicalplan
 
 import (
 	"errors"
-	logicalplan "tiny_planner/pkg/e_logical_plan"
-	"tiny_planner/pkg/f_physicalplan/expr_eval"
-	"tiny_planner/pkg/f_physicalplan/operators"
-	containers "tiny_planner/pkg/i_containers"
+	logicalplan "tiny_planner/pkg/c_logical_plan"
+	"tiny_planner/pkg/d_physicalplan/expr_eval"
+	"tiny_planner/pkg/d_physicalplan/operators"
+	containers "tiny_planner/pkg/g_containers"
 )
 
 type QueryPlanner interface {

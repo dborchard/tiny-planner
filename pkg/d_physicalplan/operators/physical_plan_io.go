@@ -3,9 +3,9 @@ package operators
 import (
 	"context"
 	"strings"
-	execution "tiny_planner/pkg/g_exec_runtime"
-	datasource "tiny_planner/pkg/h_storage_engine"
-	containers "tiny_planner/pkg/i_containers"
+	execution "tiny_planner/pkg/e_exec_runtime"
+	datasource "tiny_planner/pkg/f_storage_engine"
+	containers "tiny_planner/pkg/g_containers"
 )
 
 //----------------- Input -----------------

@@ -3,10 +3,10 @@ package operators
 import (
 	"context"
 	"fmt"
-	"tiny_planner/pkg/f_physicalplan/expr_eval"
-	execution "tiny_planner/pkg/g_exec_runtime"
-	datasource "tiny_planner/pkg/h_storage_engine"
-	containers "tiny_planner/pkg/i_containers"
+	"tiny_planner/pkg/d_physicalplan/expr_eval"
+	execution "tiny_planner/pkg/e_exec_runtime"
+	datasource "tiny_planner/pkg/f_storage_engine"
+	containers "tiny_planner/pkg/g_containers"
 )
 
 type PhysicalPlan interface {

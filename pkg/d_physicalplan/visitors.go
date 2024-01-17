@@ -1,6 +1,6 @@
 package physicalplan
 
-import logicalplan "tiny_planner/pkg/e_logical_plan"
+import logicalplan "tiny_planner/pkg/c_logical_plan"
 
 // Fun Fact:Remember the time when https://www.quora.com/Whats-the-logic-behind-Google-rejecting-Max-Howell-the-author-of-Homebrew-for-not-being-able-to-invert-a-binary-tree
 // Well, this is a time when I realized the importance of leetcode tree problems, PreOrder, InOrder, PostOrder traversal, etc.

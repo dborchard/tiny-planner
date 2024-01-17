@@ -9,8 +9,8 @@ import (
 	"io"
 	"os"
 	"strings"
-	execution "tiny_planner/pkg/g_exec_runtime"
-	containers "tiny_planner/pkg/i_containers"
+	execution "tiny_planner/pkg/e_exec_runtime"
+	containers "tiny_planner/pkg/g_containers"
 )
 
 type ParquetDataSource struct {

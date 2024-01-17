@@ -3,7 +3,7 @@ package logicalplan
 import (
 	"fmt"
 	"github.com/apache/arrow/go/v12/arrow"
-	containers "tiny_planner/pkg/i_containers"
+	containers "tiny_planner/pkg/g_containers"
 )
 
 // ---------- Comparison ----------

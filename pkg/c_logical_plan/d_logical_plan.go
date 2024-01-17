@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/apache/arrow/go/v12/arrow"
 	"strings"
-	containers "tiny_planner/pkg/i_containers"
+	containers "tiny_planner/pkg/g_containers"
 )
 
 type LogicalPlan interface {

@@ -3,7 +3,7 @@ package engine
 import (
 	"fmt"
 	"testing"
-	logicalplan "tiny_planner/pkg/e_logical_plan"
+	logicalplan "tiny_planner/pkg/c_logical_plan"
 )
 
 func TestParquetFile(t *testing.T) {
