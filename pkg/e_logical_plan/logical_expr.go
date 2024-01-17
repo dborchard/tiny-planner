@@ -8,7 +8,7 @@ import (
 )
 
 type Expr interface {
-	DataType(schema containers.ISchema) arrow.DataType
+	DataType(schema containers.ISchema) (arrow.DataType, error)
 	ColumnsUsed(input LogicalPlan) []arrow.Field
 	String() string
 }
@@ -30,14 +30,13 @@ type Column struct {
 	Name string
 }
 
-func (col Column) DataType(schema containers.ISchema) arrow.DataType {
+func (col Column) DataType(schema containers.ISchema) (arrow.DataType, error) {
 	for _, f := range schema.Fields() {
 		if f.Name == col.Name {
-			return f.Type
+			return f.Type, nil
 		}
 	}
-	panic(fmt.Sprintf("column %s not found", col.Name))
-	return nil
+	return nil, fmt.Errorf("column %s not found", col.Name)
 }
 
 func (col Column) ColumnsUsed(input LogicalPlan) []arrow.Field {
@@ -62,7 +61,7 @@ type Alias struct {
 	Alias string
 }
 
-func (expr Alias) DataType(schema containers.ISchema) arrow.DataType {
+func (expr Alias) DataType(schema containers.ISchema) (arrow.DataType, error) {
 	return expr.Expr.DataType(schema)
 }
 
@@ -80,8 +79,8 @@ type LiteralString struct {
 	Val string
 }
 
-func (lit LiteralString) DataType(schema containers.ISchema) arrow.DataType {
-	return arrow.BinaryTypes.String
+func (lit LiteralString) DataType(schema containers.ISchema) (arrow.DataType, error) {
+	return arrow.BinaryTypes.String, nil
 }
 
 func (lit LiteralString) ColumnsUsed(input LogicalPlan) []arrow.Field {
@@ -96,8 +95,8 @@ type LiteralInt64 struct {
 	Val int64
 }
 
-func (lit LiteralInt64) DataType(schema containers.ISchema) arrow.DataType {
-	return arrow.PrimitiveTypes.Int64
+func (lit LiteralInt64) DataType(schema containers.ISchema) (arrow.DataType, error) {
+	return arrow.PrimitiveTypes.Int64, nil
 }
 
 func (lit LiteralInt64) ColumnsUsed(input LogicalPlan) []arrow.Field {
@@ -112,8 +111,8 @@ type LiteralFloat64 struct {
 	Val float64
 }
 
-func (lit LiteralFloat64) DataType(schema containers.ISchema) arrow.DataType {
-	return arrow.PrimitiveTypes.Float64
+func (lit LiteralFloat64) DataType(schema containers.ISchema) (arrow.DataType, error) {
+	return arrow.PrimitiveTypes.Float64, nil
 }
 
 func (lit LiteralFloat64) ColumnsUsed(input LogicalPlan) []arrow.Field {

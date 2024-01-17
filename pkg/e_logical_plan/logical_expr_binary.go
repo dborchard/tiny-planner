@@ -36,8 +36,8 @@ type BooleanBinaryExpr struct {
 	R    Expr
 }
 
-func (be BooleanBinaryExpr) DataType(schema containers.ISchema) arrow.DataType {
-	return arrow.FixedWidthTypes.Boolean
+func (be BooleanBinaryExpr) DataType(schema containers.ISchema) (arrow.DataType, error) {
+	return arrow.FixedWidthTypes.Boolean, nil
 }
 
 func (be BooleanBinaryExpr) ColumnsUsed(input LogicalPlan) []arrow.Field {
@@ -65,8 +65,8 @@ type MathExpr struct {
 	R    Expr
 }
 
-func (m MathExpr) DataType(schema containers.ISchema) arrow.DataType {
-	return arrow.PrimitiveTypes.Float64
+func (m MathExpr) DataType(schema containers.ISchema) (arrow.DataType, error) {
+	return arrow.PrimitiveTypes.Float64, nil
 }
 
 func (m MathExpr) ColumnsUsed(input LogicalPlan) []arrow.Field {
