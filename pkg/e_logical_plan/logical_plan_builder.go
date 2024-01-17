@@ -12,7 +12,7 @@ func NewBuilder() *Builder {
 	return &Builder{}
 }
 
-func (b Builder) Scan(path string, source datasource.TableReader, proj []string) *Builder {
+func (b Builder) Input(path string, source datasource.TableReader, proj []string) *Builder {
 	return &Builder{plan: Input{Path: path, Source: source, Projection: proj}}
 }
 
@@ -28,7 +28,7 @@ func (b Builder) Aggregate(groupBy []Expr, aggExpr []AggregateExpr) *Builder {
 	return &Builder{plan: Aggregate{b.plan, groupBy, aggExpr}}
 }
 
-func (b Builder) Out(callback datasource.Callback) *Builder {
+func (b Builder) Output(callback datasource.Callback) *Builder {
 	return &Builder{plan: Output{Next: b.plan, Callback: callback}}
 }
 

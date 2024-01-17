@@ -36,7 +36,7 @@ func NewDataFrame(sessionState *phyiscalplan.ExecState) IDataFrame {
 }
 
 func (df *DataFrame) Scan(path string, source datasource.TableReader, proj []string) IDataFrame {
-	df.planBuilder = logicalplan.NewBuilder().Scan(path, source, proj)
+	df.planBuilder = logicalplan.NewBuilder().Input(path, source, proj)
 	return df
 }
 
@@ -57,7 +57,7 @@ func (df *DataFrame) Aggregate(groupBy []logicalplan.Expr, aggExpr []logicalplan
 }
 
 func (df *DataFrame) Collect(ctx context.Context, callback datasource.Callback) error {
-	df.planBuilder = df.planBuilder.Out(callback)
+	df.planBuilder = df.planBuilder.Output(callback)
 
 	physicalPlan, err := df.PhysicalPlan()
 	if err != nil {
