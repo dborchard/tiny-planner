@@ -13,7 +13,7 @@ func NewBuilder() *Builder {
 }
 
 func (b Builder) Scan(path string, source datasource.TableReader, proj []string) *Builder {
-	return &Builder{plan: Scan{Path: path, Source: source, Projection: proj}}
+	return &Builder{plan: Input{Path: path, Source: source, Projection: proj}}
 }
 
 func (b Builder) Project(expr ...Expr) *Builder {
@@ -29,7 +29,7 @@ func (b Builder) Aggregate(groupBy []Expr, aggExpr []AggregateExpr) *Builder {
 }
 
 func (b Builder) Out(callback datasource.Callback) *Builder {
-	return &Builder{plan: Out{Next: b.plan, Callback: callback}}
+	return &Builder{plan: Output{Next: b.plan, Callback: callback}}
 }
 
 func (b Builder) Build() (LogicalPlan, error) {

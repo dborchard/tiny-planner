@@ -20,21 +20,22 @@ type PlanVisitor interface {
 	PostVisit(plan LogicalPlan) bool
 }
 
-var _ LogicalPlan = Scan{}
+var _ LogicalPlan = Input{}
+var _ LogicalPlan = Output{}
+
 var _ LogicalPlan = Selection{}
 var _ LogicalPlan = Projection{}
 var _ LogicalPlan = Aggregate{}
-var _ LogicalPlan = Out{}
 
-// ----------- Scan -------------
+// ----------- Input -------------
 
-type Scan struct {
+type Input struct {
 	Path       string
 	Source     datasource.TableReader
 	Projection []string
 }
 
-func (s Scan) Accept(visitor PlanVisitor) bool {
+func (s Input) Accept(visitor PlanVisitor) bool {
 	kontinue := visitor.PreVisit(s)
 	if !kontinue {
 		return false
@@ -51,7 +52,7 @@ func (s Scan) Accept(visitor PlanVisitor) bool {
 	return visitor.PostVisit(s)
 }
 
-func (s Scan) Schema() containers.ISchema {
+func (s Input) Schema() containers.ISchema {
 	schema := s.Source.Schema()
 	if len(s.Projection) == 0 {
 		return schema
@@ -60,15 +61,15 @@ func (s Scan) Schema() containers.ISchema {
 	}
 }
 
-func (s Scan) Children() []LogicalPlan {
+func (s Input) Children() []LogicalPlan {
 	return []LogicalPlan{}
 }
 
-func (s Scan) String() string {
+func (s Input) String() string {
 	if len(s.Projection) == 0 {
-		return fmt.Sprintf("Scan: %s; projExpr=None", s.Path)
+		return fmt.Sprintf("Input: %s; projExpr=None", s.Path)
 	}
-	return fmt.Sprintf("Scan: %s; projExpr=%v", s.Path, s.Projection)
+	return fmt.Sprintf("Input: %s; projExpr=%v", s.Path, s.Projection)
 }
 
 // ----------- Projection -------------
@@ -199,26 +200,26 @@ func (a Aggregate) String() string {
 	return fmt.Sprintf("Aggregate: groupExpr=%s, aggregateExpr=%s", a.GroupExpr, a.AggregateExpr)
 }
 
-// ----------- Out -------------
+// ----------- Output -------------
 
-type Out struct {
+type Output struct {
 	Next     LogicalPlan
 	Callback datasource.Callback
 }
 
-func (o Out) Schema() containers.ISchema {
+func (o Output) Schema() containers.ISchema {
 	return o.Next.Schema()
 }
 
-func (o Out) Children() []LogicalPlan {
+func (o Output) Children() []LogicalPlan {
 	return []LogicalPlan{o.Next}
 }
 
-func (o Out) String() string {
-	return fmt.Sprintf("Out:")
+func (o Output) String() string {
+	return fmt.Sprintf("Output:")
 }
 
-func (o Out) Accept(visitor PlanVisitor) bool {
+func (o Output) Accept(visitor PlanVisitor) bool {
 	kontinue := visitor.PreVisit(o)
 	if !kontinue {
 		return false
