@@ -41,7 +41,7 @@ func (ds *ParquetDataSource) View(ctx context.Context, fn func(ctx context.Conte
 	return fn(ctx, tx)
 }
 
-func (ds *ParquetDataSource) Iterator(projection []string, tCtx execution.TaskContext, callbacks []Callback) (err error) {
+func (ds *ParquetDataSource) Iterator(tCtx execution.TaskContext, callbacks []Callback, options ...Option) (err error) {
 	parquetFile, osFile, err := openParquetFile(ds.filePath)
 	if err != nil {
 		return err
@@ -49,6 +49,11 @@ func (ds *ParquetDataSource) Iterator(projection []string, tCtx execution.TaskCo
 	defer func(osFile *os.File) {
 		err = osFile.Close()
 	}(osFile)
+
+	iterOpts := &IterOptions{}
+	for _, opt := range options {
+		opt(iterOpts)
+	}
 
 	rowGroups := make(chan parquet.RowGroup, len(callbacks))
 
@@ -67,7 +72,7 @@ func (ds *ParquetDataSource) Iterator(projection []string, tCtx execution.TaskCo
 					var vectors []containers.IVector
 					schema := rg.Schema()
 					for c, colDef := range schema.Fields() {
-						if !parquetColumnIn(colDef, projection) {
+						if !parquetColumnIn(colDef, iterOpts.Projection) {
 							continue
 						}
 						vector, err := parquetColumnToArrowVector(colDef, rg.ColumnChunks()[c])

@@ -14,12 +14,12 @@ func TestParquetDataSource_Scan(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = ds.Iterator([]string{"c1", "c2"}, execution.TaskContext{
-		Ctx: context.Background(),
-	}, []Callback{func(ctx context.Context, r containers.IBatch) error {
-		fmt.Println(r)
-		return nil
-	}})
+	err = ds.Iterator(execution.TaskContext{Ctx: context.Background()},
+		[]Callback{func(ctx context.Context, r containers.IBatch) error {
+			fmt.Println(r)
+			return nil
+		}},
+		WithProjection("c1", "c2"))
 
 	if err != nil {
 		t.Error(err)

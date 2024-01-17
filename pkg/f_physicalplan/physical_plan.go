@@ -48,14 +48,12 @@ func (s *Scan) Schema() containers.ISchema {
 }
 
 func (s *Scan) Execute(ctx execution.TaskContext, callback datasource.Callback) error {
-	//s.callback = callback
-
 	callbacks := make([]datasource.Callback, 0, len(s.Children()))
 	for _, plan := range s.Children() {
 		callbacks = append(callbacks, plan.Callback)
 	}
 
-	return s.Source.Iterator(s.Projection, ctx, callbacks)
+	return s.Source.Iterator(ctx, callbacks, datasource.WithProjection(s.Projection...))
 }
 
 func (s *Scan) Children() []PhysicalPlan {
