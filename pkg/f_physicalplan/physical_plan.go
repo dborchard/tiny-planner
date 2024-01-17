@@ -13,7 +13,7 @@ type PhysicalPlan interface {
 	Schema() containers.ISchema
 	Children() []PhysicalPlan
 	Callback(ctx context.Context, r containers.IBatch) error
-	Execute(ctx execution.TaskContext, callback datasource.Callback) error
+	Execute(ctx execution.TaskContext, callback datasource.IterCallback) error
 	SetNext(next PhysicalPlan)
 }
 
@@ -25,7 +25,7 @@ var _ PhysicalPlan = &Out{}
 //----------------- Scan -----------------
 
 type Scan struct {
-	callback   datasource.Callback
+	callback   datasource.IterCallback
 	Source     datasource.TableReader
 	Projection []string
 	Next       PhysicalPlan
@@ -47,8 +47,8 @@ func (s *Scan) Schema() containers.ISchema {
 	return schema.Select(s.Projection)
 }
 
-func (s *Scan) Execute(ctx execution.TaskContext, callback datasource.Callback) error {
-	callbacks := make([]datasource.Callback, 0, len(s.Children()))
+func (s *Scan) Execute(ctx execution.TaskContext, callback datasource.IterCallback) error {
+	callbacks := make([]datasource.IterCallback, 0, len(s.Children()))
 	for _, plan := range s.Children() {
 		callbacks = append(callbacks, plan.Callback)
 	}
@@ -97,7 +97,7 @@ func (p *Projection) Schema() containers.ISchema {
 	return p.Sch
 }
 
-func (p *Projection) Execute(ctx execution.TaskContext, callback datasource.Callback) error {
+func (p *Projection) Execute(ctx execution.TaskContext, callback datasource.IterCallback) error {
 	panic("error in Projection Execute")
 }
 
@@ -133,14 +133,14 @@ func (s *Selection) Children() []PhysicalPlan {
 	return []PhysicalPlan{s.Next}
 }
 
-func (s *Selection) Execute(ctx execution.TaskContext, callback datasource.Callback) error {
+func (s *Selection) Execute(ctx execution.TaskContext, callback datasource.IterCallback) error {
 	panic("error in Selection Execute")
 }
 
 // --------
 
 type Out struct {
-	CallbackPtr datasource.Callback
+	CallbackPtr datasource.IterCallback
 	Scan        PhysicalPlan
 }
 
@@ -156,7 +156,7 @@ func (e Out) Callback(ctx context.Context, r containers.IBatch) error {
 	return e.CallbackPtr(ctx, r)
 }
 
-func (e Out) Execute(ctx execution.TaskContext, callback datasource.Callback) error {
+func (e Out) Execute(ctx execution.TaskContext, callback datasource.IterCallback) error {
 	e.CallbackPtr = callback
 	return e.Scan.Execute(ctx, e.CallbackPtr)
 }

@@ -203,7 +203,7 @@ func (a Aggregate) String() string {
 
 type Out struct {
 	Next     LogicalPlan
-	Callback datasource.Callback
+	Callback datasource.IterCallback
 }
 
 func (o Out) Schema() containers.ISchema {
